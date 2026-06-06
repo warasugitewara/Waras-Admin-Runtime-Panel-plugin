@@ -1,8 +1,8 @@
-# WPanel Implementation Plan
+# WARP Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Paper 1.21.x Minecraft サーバー向け Web 管理パネルプラグイン WPanel を実装する。
+**Goal:** Paper 1.21.x Minecraft サーバー向け Web 管理パネルプラグイン WARP を実装する。
 
 **Architecture:** Paper プラグインが Javalin 6（127.0.0.1:8080）を組み込む。SQLite が logs/chat/history/audit を保持し BAN は Paper BanList を SoT とする。フロントエンドは React+TS SPA で JAR に同梱。Cloudflare Tunnel で外部公開。
 
@@ -18,8 +18,8 @@
 │   ├── build.gradle.kts
 │   ├── settings.gradle.kts
 │   └── src/
-│       ├── main/java/dev/warasugi/wpanel/
-│       │   ├── WPanelPlugin.java
+│       ├── main/java/dev/warasugi/warp/
+│       │   ├── WarpPlugin.java
 │       │   ├── config/PanelConfig.java
 │       │   ├── db/
 │       │   │   ├── DatabaseManager.java
@@ -46,11 +46,11 @@
 │       │   ├── ws/AdminWsHandler.java
 │       │   ├── metrics/MetricsCollector.java
 │       │   ├── console/WebSocketAppender.java
-│       │   └── commands/WPanelCommand.java
+│       │   └── commands/WarpCommand.java
 │       ├── main/resources/
 │       │   ├── plugin.yml
 │       │   └── config.yml
-│       └── test/java/dev/warasugi/wpanel/
+│       └── test/java/dev/warasugi/warp/
 │           ├── auth/TotpManagerTest.java
 │           ├── auth/JwtManagerTest.java
 │           ├── auth/RateLimiterTest.java
@@ -81,7 +81,7 @@
 
 ```kotlin
 // plugin/settings.gradle.kts
-rootProject.name = "wpanel"
+rootProject.name = "warp"
 ```
 
 - [ ] **Step 2: build.gradle.kts を作成**
@@ -117,9 +117,9 @@ dependencies {
 }
 
 tasks.shadowJar {
-    relocate("io.javalin", "dev.warasugi.wpanel.libs.javalin")
-    relocate("io.jsonwebtoken", "dev.warasugi.wpanel.libs.jwt")
-    relocate("com.fasterxml.jackson", "dev.warasugi.wpanel.libs.jackson")
+    relocate("io.javalin", "dev.warasugi.warp.libs.javalin")
+    relocate("io.jsonwebtoken", "dev.warasugi.warp.libs.jwt")
+    relocate("com.fasterxml.jackson", "dev.warasugi.warp.libs.jackson")
     mergeServiceFiles()
 }
 
@@ -139,20 +139,21 @@ gradle wrapper --gradle-version 8.10.2
 
 ```yaml
 # plugin/src/main/resources/plugin.yml
-name: WPanel
+name: WARP
 version: "1.0.0"
-main: dev.warasugi.wpanel.WPanelPlugin
+main: dev.warasugi.warp.WarpPlugin
 api-version: "1.21"
 description: Web管理パネルプラグイン
 authors: [warasugi]
 commands:
-  wpanel:
-    description: WPanel管理コマンド
-    permission: wpanel.admin
-    usage: /wpanel <setup|status|reload|token>
+  warp:
+    description: WARP管理コマンド
+    permission: warp.admin
+    aliases: [waras-admin-runtime-panel]
+    usage: /warp <setup|status|reload|token>
 permissions:
-  wpanel.admin:
-    description: WPanel管理者権限
+  warp.admin:
+    description: WARP管理者権限
     default: op
 ```
 
@@ -167,7 +168,7 @@ server:
     - "https://admin.warasugi.com"
 
 auth:
-  totp-issuer: "WPanel"
+  totp-issuer: "WARP"
   totp-secret: ""
   login-max-attempts: 5
   login-lockout-minutes: 10
@@ -204,12 +205,12 @@ git commit -m "chore: Gradleプロジェクト scaffold"
 ## Task 2: PanelConfig
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/config/PanelConfig.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/config/PanelConfig.java`
 
 - [ ] **Step 1: PanelConfig.java を作成**
 
 ```java
-package dev.warasugi.wpanel.config;
+package dev.warasugi.warp.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import java.util.List;
@@ -232,7 +233,7 @@ public class PanelConfig {
         host             = cfg.getString("server.host", "127.0.0.1");
         port             = cfg.getInt("server.port", 8080);
         corsOrigins      = cfg.getStringList("server.cors-origins");
-        totpIssuer       = cfg.getString("auth.totp-issuer", "WPanel");
+        totpIssuer       = cfg.getString("auth.totp-issuer", "WARP");
         totpSecret       = cfg.getString("auth.totp-secret", "");
         loginMaxAttempts = cfg.getInt("auth.login-max-attempts", 5);
         loginLockoutMs   = cfg.getLong("auth.login-lockout-minutes", 10) * 60_000L;
@@ -262,7 +263,7 @@ public class PanelConfig {
 - [ ] **Step 2: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/config/
+git add plugin/src/main/java/dev/warasugi/warp/config/
 git commit -m "feat: PanelConfig — config.yml のロード"
 ```
 
@@ -271,14 +272,14 @@ git commit -m "feat: PanelConfig — config.yml のロード"
 ## Task 3: TotpManager + テスト
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/auth/TotpManager.java`
-- Create: `plugin/src/test/java/dev/warasugi/wpanel/auth/TotpManagerTest.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/auth/TotpManager.java`
+- Create: `plugin/src/test/java/dev/warasugi/warp/auth/TotpManagerTest.java`
 
 - [ ] **Step 1: テストを書く**
 
 ```java
-// plugin/src/test/java/dev/warasugi/wpanel/auth/TotpManagerTest.java
-package dev.warasugi.wpanel.auth;
+// plugin/src/test/java/dev/warasugi/warp/auth/TotpManagerTest.java
+package dev.warasugi.warp.auth;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -302,10 +303,10 @@ class TotpManagerTest {
     void getQrUri_containsSecretAndIssuer() {
         String secret = TotpManager.generateSecret();
         TotpManager m = new TotpManager(secret);
-        String uri = m.getQrUri("WPanel");
+        String uri = m.getQrUri("WARP");
         assertTrue(uri.startsWith("otpauth://totp/"));
         assertTrue(uri.contains(secret));
-        assertTrue(uri.contains("WPanel"));
+        assertTrue(uri.contains("WARP"));
     }
 
     @Test
@@ -320,14 +321,14 @@ class TotpManagerTest {
 
 ```powershell
 cd plugin
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.TotpManagerTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.TotpManagerTest"
 ```
 Expected: FAIL (クラスが存在しないためコンパイルエラー)
 
 - [ ] **Step 3: TotpManager.java を実装**
 
 ```java
-package dev.warasugi.wpanel.auth;
+package dev.warasugi.warp.auth;
 
 import dev.samstevens.totp.code.*;
 import dev.samstevens.totp.secret.DefaultSecretGenerator;
@@ -364,15 +365,15 @@ public class TotpManager {
 - [ ] **Step 4: テストが通ることを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.TotpManagerTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.TotpManagerTest"
 ```
 Expected: `BUILD SUCCESSFUL`, 4 tests passed
 
 - [ ] **Step 5: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/auth/TotpManager.java \
-        plugin/src/test/java/dev/warasugi/wpanel/auth/TotpManagerTest.java
+git add plugin/src/main/java/dev/warasugi/warp/auth/TotpManager.java \
+        plugin/src/test/java/dev/warasugi/warp/auth/TotpManagerTest.java
 git commit -m "feat: TotpManager — TOTP生成・検証"
 ```
 
@@ -381,14 +382,14 @@ git commit -m "feat: TotpManager — TOTP生成・検証"
 ## Task 4: JwtManager + テスト
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/auth/JwtManager.java`
-- Create: `plugin/src/test/java/dev/warasugi/wpanel/auth/JwtManagerTest.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/auth/JwtManager.java`
+- Create: `plugin/src/test/java/dev/warasugi/warp/auth/JwtManagerTest.java`
 
 - [ ] **Step 1: テストを書く**
 
 ```java
-// plugin/src/test/java/dev/warasugi/wpanel/auth/JwtManagerTest.java
-package dev.warasugi.wpanel.auth;
+// plugin/src/test/java/dev/warasugi/warp/auth/JwtManagerTest.java
+package dev.warasugi.warp.auth;
 
 import io.jsonwebtoken.Jwts;
 import javax.crypto.SecretKey;
@@ -430,14 +431,14 @@ class JwtManagerTest {
 - [ ] **Step 2: テストが失敗することを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.JwtManagerTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.JwtManagerTest"
 ```
 Expected: FAIL
 
 - [ ] **Step 3: JwtManager.java を実装**
 
 ```java
-package dev.warasugi.wpanel.auth;
+package dev.warasugi.warp.auth;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -493,15 +494,15 @@ public class JwtManager {
 - [ ] **Step 4: テストが通ることを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.JwtManagerTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.JwtManagerTest"
 ```
 Expected: `BUILD SUCCESSFUL`, 4 tests passed
 
 - [ ] **Step 5: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/auth/JwtManager.java \
-        plugin/src/test/java/dev/warasugi/wpanel/auth/JwtManagerTest.java
+git add plugin/src/main/java/dev/warasugi/warp/auth/JwtManager.java \
+        plugin/src/test/java/dev/warasugi/warp/auth/JwtManagerTest.java
 git commit -m "feat: JwtManager — JWT発行・検証"
 ```
 
@@ -510,14 +511,14 @@ git commit -m "feat: JwtManager — JWT発行・検証"
 ## Task 5: RateLimiter + テスト
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/auth/RateLimiter.java`
-- Create: `plugin/src/test/java/dev/warasugi/wpanel/auth/RateLimiterTest.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/auth/RateLimiter.java`
+- Create: `plugin/src/test/java/dev/warasugi/warp/auth/RateLimiterTest.java`
 
 - [ ] **Step 1: テストを書く**
 
 ```java
-// plugin/src/test/java/dev/warasugi/wpanel/auth/RateLimiterTest.java
-package dev.warasugi.wpanel.auth;
+// plugin/src/test/java/dev/warasugi/warp/auth/RateLimiterTest.java
+package dev.warasugi.warp.auth;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -555,13 +556,13 @@ class RateLimiterTest {
 - [ ] **Step 2: テストが失敗することを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.RateLimiterTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.RateLimiterTest"
 ```
 
 - [ ] **Step 3: RateLimiter.java を実装**
 
 ```java
-package dev.warasugi.wpanel.auth;
+package dev.warasugi.warp.auth;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -594,15 +595,15 @@ public class RateLimiter {
 - [ ] **Step 4: テストが通ることを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.auth.RateLimiterTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.auth.RateLimiterTest"
 ```
 Expected: `BUILD SUCCESSFUL`
 
 - [ ] **Step 5: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/auth/RateLimiter.java \
-        plugin/src/test/java/dev/warasugi/wpanel/auth/RateLimiterTest.java
+git add plugin/src/main/java/dev/warasugi/warp/auth/RateLimiter.java \
+        plugin/src/test/java/dev/warasugi/warp/auth/RateLimiterTest.java
 git commit -m "feat: RateLimiter — ログイン試行制限"
 ```
 
@@ -611,18 +612,18 @@ git commit -m "feat: RateLimiter — ログイン試行制限"
 ## Task 6: DatabaseManager + Repositories + テスト
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/db/DatabaseManager.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/db/LogRepository.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/db/ChatRepository.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/db/HistoryRepository.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/db/AuditRepository.java`
-- Create: `plugin/src/test/java/dev/warasugi/wpanel/db/RepositoryTest.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/db/DatabaseManager.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/db/LogRepository.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/db/ChatRepository.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/db/HistoryRepository.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/db/AuditRepository.java`
+- Create: `plugin/src/test/java/dev/warasugi/warp/db/RepositoryTest.java`
 
 - [ ] **Step 1: テストを書く**
 
 ```java
-// plugin/src/test/java/dev/warasugi/wpanel/db/RepositoryTest.java
-package dev.warasugi.wpanel.db;
+// plugin/src/test/java/dev/warasugi/warp/db/RepositoryTest.java
+package dev.warasugi.warp.db;
 
 import org.junit.jupiter.api.*;
 import java.sql.SQLException;
@@ -701,13 +702,13 @@ class RepositoryTest {
 - [ ] **Step 2: テストが失敗することを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.db.RepositoryTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.db.RepositoryTest"
 ```
 
 - [ ] **Step 3: DatabaseManager.java を作成**
 
 ```java
-package dev.warasugi.wpanel.db;
+package dev.warasugi.warp.db;
 
 import java.nio.file.Path;
 import java.sql.*;
@@ -784,7 +785,7 @@ public class DatabaseManager implements AutoCloseable {
 - [ ] **Step 4: LogRepository.java を作成**
 
 ```java
-package dev.warasugi.wpanel.db;
+package dev.warasugi.warp.db;
 
 import java.sql.*;
 import java.util.*;
@@ -839,7 +840,7 @@ public class LogRepository {
 - [ ] **Step 5: ChatRepository.java を作成**
 
 ```java
-package dev.warasugi.wpanel.db;
+package dev.warasugi.warp.db;
 
 import java.sql.*;
 import java.util.*;
@@ -887,7 +888,7 @@ public class ChatRepository {
 - [ ] **Step 6: HistoryRepository.java を作成**
 
 ```java
-package dev.warasugi.wpanel.db;
+package dev.warasugi.warp.db;
 
 import java.sql.*;
 import java.util.*;
@@ -936,7 +937,7 @@ public class HistoryRepository {
 - [ ] **Step 7: AuditRepository.java を作成**
 
 ```java
-package dev.warasugi.wpanel.db;
+package dev.warasugi.warp.db;
 
 import java.sql.*;
 import java.util.*;
@@ -974,15 +975,15 @@ public class AuditRepository {
 - [ ] **Step 8: テストが通ることを確認**
 
 ```powershell
-.\gradlew.bat test --tests "dev.warasugi.wpanel.db.RepositoryTest"
+.\gradlew.bat test --tests "dev.warasugi.warp.db.RepositoryTest"
 ```
 Expected: `BUILD SUCCESSFUL`, 7 tests passed
 
 - [ ] **Step 9: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/db/ \
-        plugin/src/test/java/dev/warasugi/wpanel/db/
+git add plugin/src/main/java/dev/warasugi/warp/db/ \
+        plugin/src/test/java/dev/warasugi/warp/db/
 git commit -m "feat: SQLite永続化層 — DatabaseManager + 4 Repositories"
 ```
 
@@ -991,15 +992,15 @@ git commit -m "feat: SQLite永続化層 — DatabaseManager + 4 Repositories"
 ## Task 7: Auth HTTP ハンドラ
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/AuthHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/AuthHandler.java`
 
 - [ ] **Step 1: AuthHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.auth.*;
-import dev.warasugi.wpanel.config.PanelConfig;
+import dev.warasugi.warp.auth.*;
+import dev.warasugi.warp.config.PanelConfig;
 import io.javalin.http.*;
 import java.util.UUID;
 
@@ -1057,7 +1058,7 @@ public class AuthHandler {
         ctx.json(new java.util.HashMap<>() {{ put("ok", true); }});
     }
 
-    /** /wpanel token コマンドから呼ばれる */
+    /** /warp token コマンドから呼ばれる */
     public String generateOneTimeToken() {
         oneTimeToken  = UUID.randomUUID().toString().replace("-", "").substring(0, 32);
         oneTimeExpiry = System.currentTimeMillis() + 5 * 60_000L;
@@ -1085,7 +1086,7 @@ public class AuthHandler {
 - [ ] **Step 2: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/web/handlers/AuthHandler.java
+git add plugin/src/main/java/dev/warasugi/warp/web/handlers/AuthHandler.java
 git commit -m "feat: AuthHandler — TOTP認証・Cookie発行"
 ```
 
@@ -1094,15 +1095,15 @@ git commit -m "feat: AuthHandler — TOTP認証・Cookie発行"
 ## Task 8: 認証ミドルウェア
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/middleware/AuthMiddleware.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/middleware/CsrfMiddleware.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/middleware/AuthMiddleware.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/middleware/CsrfMiddleware.java`
 
 - [ ] **Step 1: AuthMiddleware.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.middleware;
+package dev.warasugi.warp.web.middleware;
 
-import dev.warasugi.wpanel.auth.JwtManager;
+import dev.warasugi.warp.auth.JwtManager;
 import io.javalin.http.*;
 
 public class AuthMiddleware {
@@ -1126,7 +1127,7 @@ public class AuthMiddleware {
 - [ ] **Step 2: CsrfMiddleware.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.middleware;
+package dev.warasugi.warp.web.middleware;
 
 import io.javalin.http.*;
 import java.util.Set;
@@ -1149,7 +1150,7 @@ public class CsrfMiddleware {
 - [ ] **Step 3: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/web/middleware/
+git add plugin/src/main/java/dev/warasugi/warp/web/middleware/
 git commit -m "feat: AuthMiddleware + CsrfMiddleware"
 ```
 
@@ -1158,19 +1159,19 @@ git commit -m "feat: AuthMiddleware + CsrfMiddleware"
 ## Task 9: REST ハンドラ群
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/StatusHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/PlayerHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/BanHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/ChatHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/ConsoleHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/handlers/LogHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/StatusHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/PlayerHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/BanHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/ChatHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/ConsoleHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/handlers/LogHandler.java`
 
 - [ ] **Step 1: StatusHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.metrics.MetricsCollector;
+import dev.warasugi.warp.metrics.MetricsCollector;
 import io.javalin.http.Context;
 
 public class StatusHandler {
@@ -1187,7 +1188,7 @@ public class StatusHandler {
 - [ ] **Step 2: PlayerHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
 import io.javalin.http.Context;
 import org.bukkit.Bukkit;
@@ -1218,9 +1219,9 @@ public class PlayerHandler {
 - [ ] **Step 3: BanHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.db.AuditRepository;
+import dev.warasugi.warp.db.AuditRepository;
 import io.javalin.http.*;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
@@ -1250,7 +1251,7 @@ public class BanHandler {
         var body = ctx.bodyAsClass(Body.class);
         Date expires = body.duration() == null ? null
             : Date.from(Instant.now().plusSeconds(body.duration()));
-        Bukkit.getBanList(BanList.Type.NAME).addBan(body.player(), body.reason(), expires, "WPanel");
+        Bukkit.getBanList(BanList.Type.NAME).addBan(body.player(), body.reason(), expires, "WARP");
         try { audit.insert(System.currentTimeMillis(), ctx.ip(), "ban",
             "{\"player\":\"" + body.player() + "\"}"); } catch (Exception ignored) {}
         ctx.status(201);
@@ -1279,7 +1280,7 @@ public class BanHandler {
     public void addIpBan(Context ctx) {
         record Body(String ip, String reason) {}
         var body = ctx.bodyAsClass(Body.class);
-        Bukkit.getBanList(BanList.Type.IP).addBan(body.ip(), body.reason(), null, "WPanel");
+        Bukkit.getBanList(BanList.Type.IP).addBan(body.ip(), body.reason(), null, "WARP");
         ctx.status(201);
     }
 
@@ -1293,9 +1294,9 @@ public class BanHandler {
 - [ ] **Step 4: ChatHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.db.*;
+import dev.warasugi.warp.db.*;
 import io.javalin.http.*;
 import org.bukkit.Bukkit;
 
@@ -1329,10 +1330,10 @@ public class ChatHandler {
 - [ ] **Step 5: ConsoleHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.config.PanelConfig;
-import dev.warasugi.wpanel.db.AuditRepository;
+import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.db.AuditRepository;
 import io.javalin.http.*;
 import org.bukkit.Bukkit;
 
@@ -1362,9 +1363,9 @@ public class ConsoleHandler {
 - [ ] **Step 6: LogHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web.handlers;
+package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.wpanel.db.LogRepository;
+import dev.warasugi.warp.db.LogRepository;
 import io.javalin.http.Context;
 
 public class LogHandler {
@@ -1384,7 +1385,7 @@ public class LogHandler {
 - [ ] **Step 7: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/web/handlers/
+git add plugin/src/main/java/dev/warasugi/warp/web/handlers/
 git commit -m "feat: REST ハンドラ群 (Status/Player/Ban/Chat/Console/Log)"
 ```
 
@@ -1393,12 +1394,12 @@ git commit -m "feat: REST ハンドラ群 (Status/Player/Ban/Chat/Console/Log)"
 ## Task 10: MetricsCollector
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/metrics/MetricsCollector.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/metrics/MetricsCollector.java`
 
 - [ ] **Step 1: MetricsCollector.java を作成**
 
 ```java
-package dev.warasugi.wpanel.metrics;
+package dev.warasugi.warp.metrics;
 
 import org.bukkit.Bukkit;
 import java.util.*;
@@ -1449,7 +1450,7 @@ public class MetricsCollector {
 - [ ] **Step 2: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/metrics/
+git add plugin/src/main/java/dev/warasugi/warp/metrics/
 git commit -m "feat: MetricsCollector — TPS/MSPT/メモリ収集"
 ```
 
@@ -1458,16 +1459,16 @@ git commit -m "feat: MetricsCollector — TPS/MSPT/メモリ収集"
 ## Task 11: AdminWsHandler + WebSocketAppender
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/ws/AdminWsHandler.java`
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/console/WebSocketAppender.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/ws/AdminWsHandler.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/console/WebSocketAppender.java`
 
 - [ ] **Step 1: AdminWsHandler.java を作成**
 
 ```java
-package dev.warasugi.wpanel.ws;
+package dev.warasugi.warp.ws;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.warasugi.wpanel.auth.JwtManager;
+import dev.warasugi.warp.auth.JwtManager;
 import io.javalin.websocket.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1508,10 +1509,10 @@ public class AdminWsHandler {
 - [ ] **Step 2: WebSocketAppender.java を作成**
 
 ```java
-package dev.warasugi.wpanel.console;
+package dev.warasugi.warp.console;
 
-import dev.warasugi.wpanel.db.LogRepository;
-import dev.warasugi.wpanel.ws.AdminWsHandler;
+import dev.warasugi.warp.db.LogRepository;
+import dev.warasugi.warp.ws.AdminWsHandler;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
@@ -1523,7 +1524,7 @@ public class WebSocketAppender extends AbstractAppender {
     private final LogRepository logRepo;
 
     public WebSocketAppender(AdminWsHandler ws, LogRepository logRepo) {
-        super("WPanelWsAppender", null,
+        super("WARPWsAppender", null,
               PatternLayout.createDefaultLayout(), false, Property.EMPTY_ARRAY);
         this.ws = ws; this.logRepo = logRepo;
     }
@@ -1557,8 +1558,8 @@ public class WebSocketAppender extends AbstractAppender {
 - [ ] **Step 3: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/ws/ \
-        plugin/src/main/java/dev/warasugi/wpanel/console/
+git add plugin/src/main/java/dev/warasugi/warp/ws/ \
+        plugin/src/main/java/dev/warasugi/warp/console/
 git commit -m "feat: AdminWsHandler + WebSocketAppender"
 ```
 
@@ -1567,17 +1568,17 @@ git commit -m "feat: AdminWsHandler + WebSocketAppender"
 ## Task 12: WebServer (Javalin 統合)
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/web/WebServer.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/web/WebServer.java`
 
 - [ ] **Step 1: WebServer.java を作成**
 
 ```java
-package dev.warasugi.wpanel.web;
+package dev.warasugi.warp.web;
 
-import dev.warasugi.wpanel.config.PanelConfig;
-import dev.warasugi.wpanel.web.handlers.*;
-import dev.warasugi.wpanel.web.middleware.*;
-import dev.warasugi.wpanel.ws.AdminWsHandler;
+import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.web.handlers.*;
+import dev.warasugi.warp.web.middleware.*;
+import dev.warasugi.warp.ws.AdminWsHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import org.bukkit.Bukkit;
@@ -1680,38 +1681,38 @@ public class WebServer {
 - [ ] **Step 2: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/web/WebServer.java
+git add plugin/src/main/java/dev/warasugi/warp/web/WebServer.java
 git commit -m "feat: WebServer — Javalin 6 ルーティング統合"
 ```
 
 ---
 
-## Task 13: WPanelCommand
+## Task 13: WarpCommand
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/commands/WPanelCommand.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/commands/WarpCommand.java`
 
-- [ ] **Step 1: WPanelCommand.java を作成**
+- [ ] **Step 1: WarpCommand.java を作成**
 
 ```java
-package dev.warasugi.wpanel.commands;
+package dev.warasugi.warp.commands;
 
-import dev.warasugi.wpanel.WPanelPlugin;
-import dev.warasugi.wpanel.auth.TotpManager;
-import dev.warasugi.wpanel.web.handlers.AuthHandler;
+import dev.warasugi.warp.WarpPlugin;
+import dev.warasugi.warp.auth.TotpManager;
+import dev.warasugi.warp.web.handlers.AuthHandler;
 import org.bukkit.command.*;
 
-public class WPanelCommand implements CommandExecutor {
-    private final WPanelPlugin plugin;
+public class WarpCommand implements CommandExecutor {
+    private final WarpPlugin plugin;
     private final AuthHandler authHandler;
 
-    public WPanelCommand(WPanelPlugin plugin, AuthHandler authHandler) {
+    public WarpCommand(WarpPlugin plugin, AuthHandler authHandler) {
         this.plugin = plugin; this.authHandler = authHandler;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (args.length == 0) { sender.sendMessage("使い方: /wpanel <setup|status|reload|token>"); return true; }
+        if (args.length == 0) { sender.sendMessage("使い方: /warp <setup|status|reload|token>"); return true; }
 
         switch (args[0].toLowerCase()) {
             case "setup" -> {
@@ -1749,36 +1750,36 @@ public class WPanelCommand implements CommandExecutor {
 - [ ] **Step 2: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/commands/
-git commit -m "feat: WPanelCommand — setup/status/reload/token"
+git add plugin/src/main/java/dev/warasugi/warp/commands/
+git commit -m "feat: WarpCommand — setup/status/reload/token"
 ```
 
 ---
 
-## Task 14: WPanelPlugin (全体統合)
+## Task 14: WarpPlugin (全体統合)
 
 **Files:**
-- Create: `plugin/src/main/java/dev/warasugi/wpanel/WPanelPlugin.java`
+- Create: `plugin/src/main/java/dev/warasugi/warp/WarpPlugin.java`
 
-- [ ] **Step 1: WPanelPlugin.java を作成**
+- [ ] **Step 1: WarpPlugin.java を作成**
 
 ```java
-package dev.warasugi.wpanel;
+package dev.warasugi.warp;
 
-import dev.warasugi.wpanel.auth.*;
-import dev.warasugi.wpanel.commands.WPanelCommand;
-import dev.warasugi.wpanel.config.PanelConfig;
-import dev.warasugi.wpanel.console.WebSocketAppender;
-import dev.warasugi.wpanel.db.*;
-import dev.warasugi.wpanel.metrics.MetricsCollector;
-import dev.warasugi.wpanel.web.WebServer;
-import dev.warasugi.wpanel.web.handlers.*;
-import dev.warasugi.wpanel.web.middleware.*;
-import dev.warasugi.wpanel.ws.AdminWsHandler;
+import dev.warasugi.warp.auth.*;
+import dev.warasugi.warp.commands.WarpCommand;
+import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.console.WebSocketAppender;
+import dev.warasugi.warp.db.*;
+import dev.warasugi.warp.metrics.MetricsCollector;
+import dev.warasugi.warp.web.WebServer;
+import dev.warasugi.warp.web.handlers.*;
+import dev.warasugi.warp.web.middleware.*;
+import dev.warasugi.warp.ws.AdminWsHandler;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.nio.file.Path;
 
-public class WPanelPlugin extends JavaPlugin {
+public class WarpPlugin extends JavaPlugin {
     private PanelConfig panelConfig;
     private TotpManager totpManager;
     private JwtManager jwtManager;
@@ -1796,7 +1797,7 @@ public class WPanelPlugin extends JavaPlugin {
 
         try {
             // DB
-            dbManager = new DatabaseManager(dataDir.resolve("wpanel.db"));
+            dbManager = new DatabaseManager(dataDir.resolve("warp.db"));
             var logRepo  = new LogRepository(dbManager.getConnection());
             var chatRepo = new ChatRepository(dbManager.getConnection());
             var histRepo = new HistoryRepository(dbManager.getConnection());
@@ -1847,14 +1848,14 @@ public class WPanelPlugin extends JavaPlugin {
             getServer().getScheduler().runTaskTimer(this, metricsCollector::tick, 0L, 40L);
 
             // コマンド登録
-            getCommand("wpanel").setExecutor(new WPanelCommand(this, authHandler));
+            getCommand("warp").setExecutor(new WarpCommand(this, authHandler));
 
-            getLogger().info("WPanel 起動完了 — port=" + panelConfig.getPort());
+            getLogger().info("WARP 起動完了 — port=" + panelConfig.getPort());
             if (totpManager == null)
-                getLogger().warning("TOTP未設定。/wpanel setup を実行してください。");
+                getLogger().warning("TOTP未設定。/warp setup を実行してください。");
 
         } catch (Exception e) {
-            getLogger().severe("WPanel 起動失敗: " + e.getMessage());
+            getLogger().severe("WARP 起動失敗: " + e.getMessage());
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
         }
@@ -1864,7 +1865,7 @@ public class WPanelPlugin extends JavaPlugin {
     public void onDisable() {
         if (webServer != null) webServer.stop();
         try { if (dbManager != null) dbManager.close(); } catch (Exception ignored) {}
-        getLogger().info("WPanel 停止完了");
+        getLogger().info("WARP 停止完了");
     }
 
     public PanelConfig getPanelConfig() { return panelConfig; }
@@ -1889,13 +1890,13 @@ Expected: `BUILD SUCCESSFUL`
 ```powershell
 .\gradlew.bat shadowJar
 ```
-Expected: `BUILD SUCCESSFUL`, `plugin/build/libs/wpanel-1.0.0-all.jar` が生成される
+Expected: `BUILD SUCCESSFUL`, `plugin/build/libs/warp-1.0.0-all.jar` が生成される
 
 - [ ] **Step 4: commit**
 
 ```bash
-git add plugin/src/main/java/dev/warasugi/wpanel/WPanelPlugin.java
-git commit -m "feat: WPanelPlugin — プラグイン全体統合"
+git add plugin/src/main/java/dev/warasugi/warp/WarpPlugin.java
+git commit -m "feat: WarpPlugin — プラグイン全体統合"
 ```
 
 ---
@@ -2125,7 +2126,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
       <div className="bg-bg-card p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-white/5">
-        <h1 className="text-2xl font-bold text-accent-primary mb-6 text-center">WPanel</h1>
+        <h1 className="text-2xl font-bold text-accent-primary mb-6 text-center">WARP</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">認証コード (6桁)</label>
@@ -2216,7 +2217,7 @@ const links = [
 export default function Sidebar() {
   return (
     <aside className="w-48 bg-bg-secondary h-screen flex flex-col py-6 px-4 border-r border-white/5">
-      <div className="text-accent-primary font-bold text-xl mb-8">WPanel</div>
+      <div className="text-accent-primary font-bold text-xl mb-8">WARP</div>
       <nav className="space-y-1">
         {links.map(l => (
           <NavLink key={l.to} to={l.to} end={l.to === '/'}
@@ -2754,7 +2755,7 @@ cd plugin
 Expected: `BUILD SUCCESSFUL`。JAR 内に `web/` ディレクトリが含まれることを確認:
 
 ```powershell
-jar tf build/libs/wpanel-1.0.0-all.jar | Select-String "web/"
+jar tf build/libs/warp-1.0.0-all.jar | Select-String "web/"
 ```
 
 - [ ] **Step 3: .gitignore を作成**
@@ -2783,10 +2784,10 @@ git commit -m "chore: フロントエンドをshadowJarに自動バンドル"
 
 1. **単体テスト:** `cd plugin && .\gradlew.bat test` → BUILD SUCCESSFUL
 2. **フロントビルド:** `cd frontend && npm run build` → dist/ 生成
-3. **JAR ビルド:** `cd plugin && .\gradlew.bat shadowJar` → `build/libs/wpanel-1.0.0-all.jar`
+3. **JAR ビルド:** `cd plugin && .\gradlew.bat shadowJar` → `build/libs/warp-1.0.0-all.jar`
 4. **実機テスト:**
    - Paper 1.21.x サーバーに JAR を配置して起動
-   - `/wpanel setup` でQR表示 → 認証アプリでスキャン
+   - `/warp setup` でQR表示 → 認証アプリでスキャン
    - `https://ホスト名/login` にアクセス → TOTP 入力 → Dashboard 表示
    - TPS/MSPT がリアルタイム更新されることを確認
    - Terminal でコマンド実行 → ログに反映されることを確認
