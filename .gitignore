@@ -1,0 +1,21 @@
+# Gradle
+plugin/build/
+plugin/.gradle/
+plugin/gradle/wrapper/gradle-wrapper.jar
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/src/lib/api-types.ts
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+plugin/src/main/resources/secret.key
