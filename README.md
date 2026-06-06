@@ -1,4 +1,4 @@
-# WPanel
+# WARP — Waras-Admin-Runtime-Panel
 
 Paper 1.21.x 対応の Minecraft サーバー向け Web 管理パネルプラグイン。
 
@@ -49,7 +49,7 @@ Paper BanList (BAN の SoT)
 - **Layer 1 — Cloudflare**: Tunnel でポート非公開・WAF・DDoS 保護
 - **Layer 2 — 認証**: 共有 TOTP + JWT (HttpOnly + Secure + SameSite=Strict Cookie)
 - **Layer 3 — API**: 全エンドポイント Cookie 認証必須・状態変更系は CSRF トークン必須
-- JWT 秘密鍵は起動時に自動生成（`plugins/WPanel/secret.key`）
+- JWT 秘密鍵は起動時に自動生成（`plugins/WARP/secret.key`）
 - ログイン試行: 5回/10分でロックアウト
 - BAN 操作・コマンド実行・チャット送信はすべて audit テーブルに記録
 
@@ -62,12 +62,12 @@ Paper BanList (BAN の SoT)
 
 ### インストール
 
-1. [Releases](https://github.com/warasugitewara/Waras-Admin-Runtime-Panel-plugin/releases) から `wpanel-x.x.x-all.jar` をダウンロード
+1. [Releases](https://github.com/warasugitewara/Waras-Admin-Runtime-Panel-plugin/releases) から `warp-x.x.x-all.jar` をダウンロード
 2. Paper サーバーの `plugins/` に配置してサーバーを起動
 3. コンソールで TOTP を設定:
 
 ```
-/wpanel setup
+/warp setup
 ```
 
 QR コードの URI が出力されるので、Google Authenticator / Authy 等でスキャン。1〜4人が同じ QR を登録する。
@@ -79,8 +79,8 @@ QR コードの URI が出力されるので、Google Authenticator / Authy 等�
 ```bash
 # トンネル作成
 cloudflared tunnel login
-cloudflared tunnel create wpanel
-cloudflared tunnel route dns wpanel admin.example.com
+cloudflared tunnel create warp
+cloudflared tunnel route dns warp admin.example.com
 
 # config.yml
 cat << 'EOF' > ~/.cloudflared/config.yml
@@ -99,7 +99,7 @@ systemctl enable --now cloudflared
 
 ### config.yml
 
-`plugins/WPanel/config.yml` で設定をカスタマイズ:
+`plugins/WARP/config.yml` で設定をカスタマイズ:
 
 ```yaml
 server:
@@ -109,7 +109,7 @@ server:
     - "https://admin.example.com"
 
 auth:
-  totp-issuer: "WPanel"
+  totp-issuer: "WARP"
   login-max-attempts: 5
   login-lockout-minutes: 10
   session-hours: 8
@@ -129,12 +129,12 @@ console:
 
 | コマンド | 動作 |
 |---|---|
-| `/wpanel setup` | TOTP 登録（初回） |
-| `/wpanel status` | 現在の TPS・MSPT・プレイヤー数を表示 |
-| `/wpanel reload` | config.yml を再読込 |
-| `/wpanel token` | 緊急ワンタイムトークンを発行（5分有効） |
+| `/warp setup` | TOTP 登録（初回） |
+| `/warp status` | 現在の TPS・MSPT・プレイヤー数を表示 |
+| `/warp reload` | config.yml を再読込 |
+| `/warp token` | 緊急ワンタイムトークンを発行（5分有効） |
 
-権限: `wpanel.admin`（デフォルト: OP のみ）
+権限: `warp.admin`（デフォルト: OP のみ）
 
 ## ビルド
 
@@ -151,7 +151,7 @@ cd ..
 # JAR ビルド（フロントエンドを自動バンドル）
 cd plugin
 .\gradlew.bat shadowJar
-# → plugin/build/libs/wpanel-1.0.0-all.jar
+# → plugin/build/libs/warp-1.0.0-all.jar
 ```
 
 ## ライセンス
