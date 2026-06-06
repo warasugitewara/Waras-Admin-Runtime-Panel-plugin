@@ -1,0 +1,22 @@
+server:
+  host: "127.0.0.1"
+  port: 8080
+  cors-origins:
+    - "https://admin.warasugi.com"
+
+auth:
+  totp-issuer: "WARP"
+  totp-secret: ""
+  login-max-attempts: 5
+  login-lockout-minutes: 10
+  session-hours: 8
+
+storage:
+  logs-max-rows: 100000
+  chat-max-rows: 50000
+  history-max-rows: 50000
+
+console:
+  command-blocklist:
+    - "stop"
+    - "restart"

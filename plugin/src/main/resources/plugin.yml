@@ -1,0 +1,16 @@
+name: WARP
+version: "1.0.0"
+main: dev.warasugi.warp.WarpPlugin
+api-version: "1.21"
+description: Web管理パネルプラグイン
+authors: [warasugi]
+commands:
+  warp:
+    description: WARP管理コマンド
+    permission: warp.admin
+    aliases: [waras-admin-runtime-panel]
+    usage: /warp <setup|status|reload|token>
+permissions:
+  warp.admin:
+    description: WARP管理者権限
+    default: op
