@@ -17,5 +17,8 @@ frontend/src/lib/api-types.ts
 .DS_Store
 Thumbs.db
 
+# Generated (frontend build artifacts bundled into JAR)
+plugin/src/main/resources/web/
+
 # Secrets
 plugin/src/main/resources/secret.key

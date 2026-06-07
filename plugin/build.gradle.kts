@@ -38,3 +38,22 @@ tasks.shadowJar {
 tasks.test { useJUnitPlatform() }
 
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }
+
+// ===== Frontend bundling =====
+val npmBuild by tasks.registering(Exec::class) {
+    workingDir = file("../frontend")
+    commandLine("cmd", "/c", "npm", "run", "build")
+    inputs.dir("../frontend/src")
+    inputs.file("../frontend/package.json")
+    outputs.dir("../frontend/dist")
+}
+
+val copyFrontend by tasks.registering(Copy::class) {
+    dependsOn(npmBuild)
+    from("../frontend/dist")
+    into("src/main/resources/web")
+}
+
+tasks.named("processResources") {
+    dependsOn(copyFrontend)
+}
