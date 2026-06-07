@@ -83,40 +83,62 @@ public class WebServer {
         app.get("/api/history", history::getHistory);
 
         // WebSocket
+        // SPA index
+        app.get("/", ctx -> {
+            ctx.contentType("text/html");
+            var s = getClass().getResourceAsStream("/web/index.html");
+            if (s != null) ctx.result(s);
+        });
+
+        // 404: 静的アセット or SPA フォールバック
+        app.error(404, ctx -> {
+            String path = ctx.path();
+            if (path.startsWith("/api") || path.startsWith("/ws")) return;
+            // 拡張子があればクラスパスから探す（パストラバーサル対策: 正規化後 /web/ プレフィックス検証）
+            if (path.contains(".")) {
+                String norm = java.nio.file.Paths.get("/web", path).normalize().toString().replace('\\', '/');
+                if (norm.startsWith("/web/")) {
+                    var s = getClass().getResourceAsStream(norm);
+                    if (s != null) {
+                        ctx.status(200);
+                        ctx.contentType(contentType(path));
+                        ctx.result(s);
+                        return;
+                    }
+                }
+            }
+            // SPA フォールバック (React Router のクライアントルーティング)
+            var s = getClass().getResourceAsStream("/web/index.html");
+            if (s != null) {
+                ctx.status(200);
+                ctx.contentType("text/html");
+                ctx.result(s);
+            }
+        });
+
         app.ws("/ws", wsConfig -> {
             wsConfig.onConnect(ws::onConnect);
             wsConfig.onClose(ws::onClose);
             wsConfig.onError(ws::onError);
         });
 
-        // Static: SPA index
-        app.get("/", ctx -> {
-            ctx.contentType("text/html");
-            var stream = getClass().getResourceAsStream("/web/index.html");
-            if (stream != null) {
-                ctx.result(stream);
-            } else {
-                ctx.result("WARP Panel - Frontend not bundled");
-            }
-        });
-
-        // SPA フォールバック (404 で /api・/ws 以外はindex.htmlを返す)
-        app.error(404, ctx -> {
-            String path = ctx.path();
-            if (!path.startsWith("/api") && !path.startsWith("/ws")) {
-                ctx.contentType("text/html");
-                var stream = getClass().getResourceAsStream("/web/index.html");
-                if (stream != null) {
-                    ctx.result(stream);
-                }
-            }
-        });
     }
 
     /**
      * Bukkit メインスレッドで callable を実行して結果を返す。
      * すでにメインスレッド上であればそのまま call() する。
      */
+    private static String contentType(String path) {
+        if (path.endsWith(".css"))   return "text/css";
+        if (path.endsWith(".js"))    return "application/javascript";
+        if (path.endsWith(".svg"))   return "image/svg+xml";
+        if (path.endsWith(".ico"))   return "image/x-icon";
+        if (path.endsWith(".png"))   return "image/png";
+        if (path.endsWith(".woff2")) return "font/woff2";
+        if (path.endsWith(".html"))  return "text/html";
+        return "application/octet-stream";
+    }
+
     public <T> T sync(Callable<T> callable) throws Exception {
         if (Bukkit.isPrimaryThread()) {
             return callable.call();
