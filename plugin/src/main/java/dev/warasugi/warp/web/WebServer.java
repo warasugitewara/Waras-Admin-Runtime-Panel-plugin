@@ -94,17 +94,15 @@ public class WebServer {
         app.error(404, ctx -> {
             String path = ctx.path();
             if (path.startsWith("/api") || path.startsWith("/ws")) return;
-            // 拡張子があればクラスパスから探す（パストラバーサル対策: 正規化後 /web/ プレフィックス検証）
-            if (path.contains(".")) {
-                String norm = java.nio.file.Paths.get("/web", path).normalize().toString().replace('\\', '/');
-                if (norm.startsWith("/web/")) {
-                    var s = getClass().getResourceAsStream(norm);
-                    if (s != null) {
-                        ctx.status(200);
-                        ctx.contentType(contentType(path));
-                        ctx.result(s);
-                        return;
-                    }
+            // 拡張子があればクラスパスから探す
+            // パストラバーサル対策: ".." "\" "%" を含むパスを拒否
+            if (path.contains(".") && !path.contains("..") && !path.contains("\\") && !path.contains("%")) {
+                var s = getClass().getResourceAsStream("/web" + path);
+                if (s != null) {
+                    ctx.status(200);
+                    ctx.contentType(contentType(path));
+                    ctx.result(s);
+                    return;
                 }
             }
             // SPA フォールバック (React Router のクライアントルーティング)
