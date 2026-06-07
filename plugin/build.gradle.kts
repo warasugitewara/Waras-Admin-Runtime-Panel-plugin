@@ -3,6 +3,8 @@ plugins {
     id("com.gradleup.shadow") version "8.3.3"
 }
 
+version = "1.0.0"
+
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
     mavenCentral()
