@@ -13,26 +13,40 @@ import dev.warasugi.warp.web.middleware.AuthMiddleware;
 import dev.warasugi.warp.web.middleware.CsrfMiddleware;
 import dev.warasugi.warp.ws.AdminWsHandler;
 import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class WebServer {
 
     private final Javalin app;
     private final Plugin plugin;
 
-    public WebServer(Plugin plugin, PanelConfig config,
+    public WebServer(Plugin plugin, File pluginJar, PanelConfig config,
                      AuthHandler auth, StatusHandler status, PlayerHandler player,
                      BanHandler ban, ChatHandler chat, ConsoleHandler console,
                      LogHandler log, HistoryHandler history,
-                     AdminWsHandler ws, AuthMiddleware authMw, CsrfMiddleware csrfMw) {
+                     AdminWsHandler ws, AuthMiddleware authMw, CsrfMiddleware csrfMw) throws Exception {
         this.plugin = plugin;
+
+        // クラスローダーに依存せず物理 JAR から直接展開する（PluginRemapper 対策）
+        Path webRoot = extractWebResources(plugin, pluginJar);
 
         app = Javalin.create(cfg -> {
             cfg.useVirtualThreads = true;
+            cfg.staticFiles.add(webRoot.toAbsolutePath().toString(), Location.EXTERNAL);
+            cfg.spaRoot.addFile("/", webRoot.resolve("index.html").toAbsolutePath().toString(), Location.EXTERNAL);
 
             List<String> origins = config.getCorsOrigins();
             if (!origins.isEmpty()) {
@@ -83,58 +97,41 @@ public class WebServer {
         app.get("/api/history", history::getHistory);
 
         // WebSocket
-        // SPA index
-        app.get("/", ctx -> {
-            ctx.contentType("text/html");
-            var s = getClass().getResourceAsStream("/web/index.html");
-            if (s != null) ctx.result(s);
-        });
-
-        // 404: 静的アセット or SPA フォールバック
-        app.error(404, ctx -> {
-            String path = ctx.path();
-            if (path.startsWith("/api") || path.startsWith("/ws")) return;
-            // 拡張子があればクラスパスから探す
-            // パストラバーサル対策: ".." "\" "%" を含むパスを拒否
-            if (path.contains(".") && !path.contains("..") && !path.contains("\\") && !path.contains("%")) {
-                var s = getClass().getResourceAsStream("/web" + path);
-                if (s != null) {
-                    ctx.status(200);
-                    ctx.contentType(contentType(path));
-                    ctx.result(s);
-                    return;
-                }
-            }
-            // SPA フォールバック (React Router のクライアントルーティング)
-            var s = getClass().getResourceAsStream("/web/index.html");
-            if (s != null) {
-                ctx.status(200);
-                ctx.contentType("text/html");
-                ctx.result(s);
-            }
-        });
-
         app.ws("/ws", wsConfig -> {
             wsConfig.onConnect(ws::onConnect);
             wsConfig.onClose(ws::onClose);
             wsConfig.onError(ws::onError);
         });
-
     }
 
     /**
-     * Bukkit メインスレッドで callable を実行して結果を返す。
-     * すでにメインスレッド上であればそのまま call() する。
+     * pluginJar（plugins/warp-*.jar）の web/ エントリをデータフォルダに展開する。
+     * Paper の PluginRemapper はクラスを書き換えるが resources はそのまま。
+     * JarFile で物理ファイルを直接読むことでクラスローダーの差異を回避する。
      */
-    private static String contentType(String path) {
-        if (path.endsWith(".css"))   return "text/css";
-        if (path.endsWith(".js"))    return "application/javascript";
-        if (path.endsWith(".svg"))   return "image/svg+xml";
-        if (path.endsWith(".ico"))   return "image/x-icon";
-        if (path.endsWith(".png"))   return "image/png";
-        if (path.endsWith(".woff2")) return "font/woff2";
-        if (path.endsWith(".html"))  return "text/html";
-        return "application/octet-stream";
+    private static Path extractWebResources(Plugin plugin, File pluginJar) throws Exception {
+        Path dir = plugin.getDataFolder().toPath().resolve("web-cache");
+        if (Files.exists(dir)) {
+            Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(p -> {
+                try { Files.delete(p); } catch (Exception ignored) {}
+            });
+        }
+        Files.createDirectories(dir);
+        try (var jar = new JarFile(pluginJar)) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                if (entry.getName().startsWith("web/") && !entry.isDirectory()) {
+                    String rel = entry.getName().substring(4); // "web/" を除去
+                    Path dest = dir.resolve(rel);
+                    Files.createDirectories(dest.getParent());
+                    try (var in = jar.getInputStream(entry)) {
+                        Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+        }
+        return dir;
     }
 
     public <T> T sync(Callable<T> callable) throws Exception {

@@ -76,7 +76,7 @@ public class WarpPlugin extends JavaPlugin {
             CsrfMiddleware csrfMw = new CsrfMiddleware();
 
             // Server
-            webServer = new WebServer(this, config,
+            webServer = new WebServer(this, getFile(), config,
                     authHandler, statusHandler, playerHandler,
                     banHandler, chatHandler, consoleHandler,
                     logHandler, historyHandler, wsHandler, authMw, csrfMw);

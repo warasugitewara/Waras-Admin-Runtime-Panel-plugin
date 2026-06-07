@@ -40,7 +40,7 @@ Paper BanList (BAN の SoT)
 | 認証 | TOTP (RFC 6238), JWT (jjwt 0.12.6), HttpOnly Cookie |
 | DB | SQLite (xerial 3.46) |
 | API 型安全 | Javalin OpenAPI → openapi-typescript |
-| Frontend | React 18 + TypeScript 5 + Vite 5 + Tailwind v3 |
+| Frontend | React 19 + TypeScript 5 + Vite 8 + Tailwind 4 |
 | グラフ | ApexCharts |
 | ターミナル | xterm.js 5 |
 
@@ -151,7 +151,7 @@ cd ..
 # JAR ビルド（フロントエンドを自動バンドル）
 cd plugin
 .\gradlew.bat shadowJar
-# → plugin/build/libs/warp-1.0.0-all.jar
+# → plugin/build/libs/warp-1.0.3-all.jar
 ```
 
 ## ライセンス

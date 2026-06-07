@@ -10,6 +10,10 @@ public class DatabaseManager {
     public DatabaseManager(String jdbcPath) throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite:" + jdbcPath);
         connection.setAutoCommit(true);
+        try (var st = connection.createStatement()) {
+            st.execute("PRAGMA journal_mode=WAL");
+            st.execute("PRAGMA synchronous=NORMAL");
+        }
         initSchema();
     }
 
