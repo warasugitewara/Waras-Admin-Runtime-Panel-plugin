@@ -10,6 +10,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
     implementation("io.javalin:javalin:6.4.0")
     implementation("io.javalin.community.openapi:javalin-openapi-plugin:6.1.3")
     annotationProcessor("io.javalin.community.openapi:openapi-annotation-processor:6.1.3")
