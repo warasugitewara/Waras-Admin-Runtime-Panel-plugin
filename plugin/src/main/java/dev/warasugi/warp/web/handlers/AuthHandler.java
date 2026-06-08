@@ -13,11 +13,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthHandler {
-    private final TotpManager totp;
+    private TotpManager totp;
     private final JwtManager jwt;
     private final RateLimiter limiter;
     private final PanelConfig config;
     private final ConcurrentHashMap<String, Long> oneTimeTokens = new ConcurrentHashMap<>();
+
+    public void setTotpManager(TotpManager totp) {
+        this.totp = totp;
+    }
 
     public AuthHandler(TotpManager totp, JwtManager jwt, RateLimiter limiter, PanelConfig config) {
         this.totp = totp;

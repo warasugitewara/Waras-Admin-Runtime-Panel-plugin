@@ -6,10 +6,13 @@ import dev.warasugi.warp.metrics.MetricsCollector;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public class WarpCommand implements CommandExecutor {
+import java.util.List;
+
+public class WarpCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
     private final AuthHandler auth;
     private final MetricsCollector metrics;
@@ -51,7 +54,7 @@ public class WarpCommand implements CommandExecutor {
         String secret = TotpManager.generateSecret();
         TotpManager newTotp = new TotpManager(secret);
         this.totpManagerRef = newTotp;
-        // config.yml に保存 (WarpPlugin 経由で行う想定だが、ここでは通知のみ)
+        auth.setTotpManager(newTotp);
         sender.sendMessage("§6[WARP] §aNew TOTP secret generated!");
         sender.sendMessage("§7Secret: §e" + secret);
         sender.sendMessage("§7QR URI: §e" + newTotp.getQrUri("WARP"));
@@ -72,11 +75,28 @@ public class WarpCommand implements CommandExecutor {
 
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
+        String newSecret = plugin.getConfig().getString("auth.totp-secret", "");
+        if (newSecret != null && !newSecret.isBlank()) {
+            auth.setTotpManager(new TotpManager(newSecret));
+        }
         sender.sendMessage("§6[WARP] §aconfig.yml reloaded.");
     }
 
     private void handleToken(CommandSender sender) {
         String token = auth.issueOneTimeToken();
         sender.sendMessage("§6[WARP] §aOne-time token (5min): §e" + token);
+    }
+
+    private static final List<String> SUBCOMMANDS = List.of("setup", "status", "reload", "token");
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String alias, @NotNull String[] args) {
+        if (!sender.hasPermission("warp.admin")) return List.of();
+        if (args.length == 1) {
+            String input = args[0].toLowerCase();
+            return SUBCOMMANDS.stream().filter(s -> s.startsWith(input)).toList();
+        }
+        return List.of();
     }
 }

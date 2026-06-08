@@ -86,7 +86,10 @@ public class WarpPlugin extends JavaPlugin {
             WarpCommand warpCommand = new WarpCommand(this, authHandler, metricsCollector);
             if (totpManager != null) warpCommand.setTotpManager(totpManager);
             var cmd = getCommand("warp");
-            if (cmd != null) cmd.setExecutor(warpCommand);
+            if (cmd != null) {
+                cmd.setExecutor(warpCommand);
+                cmd.setTabCompleter(warpCommand);
+            }
 
             getLogger().info("WARP 起動完了 — port=" + config.getPort());
             if (totpManager == null) {

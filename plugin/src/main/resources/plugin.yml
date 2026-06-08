@@ -1,5 +1,5 @@
 name: WARP
-version: "1.0.3"
+version: "1.0.4"
 main: dev.warasugi.warp.WarpPlugin
 api-version: "1.21"
 description: Web管理パネルプラグイン
