@@ -17,14 +17,12 @@ function DashboardHome() {
   const [tpsHistory, setTpsHistory] = useState<number[]>([])
 
   useEffect(() => {
-    wsClient.connect()
-    wsClient.onMessage((type, data) => {
+    return wsClient.onMessage((type, data) => {
       if (type !== 'metrics') return
       const m = data as Metrics
       setMetrics(m)
       setTpsHistory(prev => [...prev.slice(-59), m.tps[0]])
     })
-    return () => wsClient.disconnect()
   }, [])
 
   const cards = metrics

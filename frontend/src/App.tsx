@@ -7,13 +7,24 @@ import Chat from './pages/Chat'
 import Bans from './pages/Bans'
 import Logs from './pages/Logs'
 import History from './pages/History'
+import RequireAuth from './components/RequireAuth'
+import WsProvider from './components/WsProvider'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Dashboard />}>
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <WsProvider>
+                <Dashboard />
+              </WsProvider>
+            </RequireAuth>
+          }
+        >
           <Route path="terminal" element={<Terminal />} />
           <Route path="players" element={<Players />} />
           <Route path="chat" element={<Chat />} />

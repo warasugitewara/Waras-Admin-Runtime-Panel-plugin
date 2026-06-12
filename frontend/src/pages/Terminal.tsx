@@ -24,7 +24,7 @@ export default function Terminal() {
     }
     xtermRef.current = term
 
-    wsClient.onMessage((type, data) => {
+    const unsubscribe = wsClient.onMessage((type, data) => {
       if (type === 'log' || type === 'console') {
         const d = data as { line?: string; msg?: string }
         term.writeln(d.line ?? d.msg ?? '')
@@ -35,6 +35,7 @@ export default function Terminal() {
     if (termRef.current) ro.observe(termRef.current)
 
     return () => {
+      unsubscribe()
       ro.disconnect()
       term.dispose()
     }

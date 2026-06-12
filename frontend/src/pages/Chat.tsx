@@ -16,7 +16,7 @@ export default function Chat() {
 
   useEffect(() => {
     api.chat().then(d => setMessages((d as ChatMsg[]).reverse()))
-    wsClient.onMessage((type, data) => {
+    return wsClient.onMessage((type, data) => {
       if (type !== 'chat') return
       const d = data as { player: string; msg: string; time: number }
       setMessages(prev => [

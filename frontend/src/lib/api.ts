@@ -1,6 +1,16 @@
 // Auto-generated types will be imported when openapi-typescript runs
 // For now, use 'unknown' as placeholder
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(status: number, statusText: string) {
+    super(`${status} ${statusText}`)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 async function getCsrfToken(): Promise<string> {
   const match = document.cookie.match(/csrf_token=([^;]+)/)
   return match ? decodeURIComponent(match[1]) : ''
@@ -27,7 +37,7 @@ async function request<T>(
     if (res.status === 401) {
       window.location.href = '/login'
     }
-    throw new Error(`${res.status} ${res.statusText}`)
+    throw new ApiError(res.status, res.statusText)
   }
   const text = await res.text()
   if (!text) return undefined as T
