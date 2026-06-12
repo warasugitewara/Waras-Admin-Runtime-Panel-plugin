@@ -17,13 +17,15 @@ public class ChatRepository {
     }
 
     public void insert(long ts, String uuid, String name, String message) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO chat(ts,player_uuid,player_name,message) VALUES(?,?,?,?)")) {
-            ps.setLong(1, ts);
-            ps.setString(2, uuid);
-            ps.setString(3, name);
-            ps.setString(4, message);
-            ps.executeUpdate();
+        synchronized (conn) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO chat(ts,player_uuid,player_name,message) VALUES(?,?,?,?)")) {
+                ps.setLong(1, ts);
+                ps.setString(2, uuid);
+                ps.setString(3, name);
+                ps.setString(4, message);
+                ps.executeUpdate();
+            }
         }
     }
 
@@ -31,31 +33,35 @@ public class ChatRepository {
         String sql = since != null
                 ? "SELECT id,ts,player_uuid,player_name,message FROM chat WHERE ts>? ORDER BY ts DESC LIMIT ? OFFSET ?"
                 : "SELECT id,ts,player_uuid,player_name,message FROM chat ORDER BY ts DESC LIMIT ? OFFSET ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (since != null) {
-                ps.setLong(1, since);
-                ps.setInt(2, pageSize);
-                ps.setInt(3, offset);
-            } else {
-                ps.setInt(1, pageSize);
-                ps.setInt(2, offset);
-            }
-            List<ChatEntry> result = new ArrayList<>();
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    result.add(new ChatEntry(rs.getLong("id"), rs.getLong("ts"),
-                            rs.getString("player_uuid"), rs.getString("player_name"), rs.getString("message")));
+        synchronized (conn) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (since != null) {
+                    ps.setLong(1, since);
+                    ps.setInt(2, pageSize);
+                    ps.setInt(3, offset);
+                } else {
+                    ps.setInt(1, pageSize);
+                    ps.setInt(2, offset);
                 }
+                List<ChatEntry> result = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        result.add(new ChatEntry(rs.getLong("id"), rs.getLong("ts"),
+                                rs.getString("player_uuid"), rs.getString("player_name"), rs.getString("message")));
+                    }
+                }
+                return result;
             }
-            return result;
         }
     }
 
     public void pruneToMax(int maxRows) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
-                "DELETE FROM chat WHERE id NOT IN (SELECT id FROM chat ORDER BY ts DESC LIMIT ?)")) {
-            ps.setInt(1, maxRows);
-            ps.executeUpdate();
+        synchronized (conn) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "DELETE FROM chat WHERE id NOT IN (SELECT id FROM chat ORDER BY ts DESC LIMIT ?)")) {
+                ps.setInt(1, maxRows);
+                ps.executeUpdate();
+            }
         }
     }
 }

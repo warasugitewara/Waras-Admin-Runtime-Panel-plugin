@@ -21,9 +21,13 @@ public class MetricsCollector {
         latest = buildSnapshot();
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             latest = buildSnapshot();
-            for (var listener : listeners) {
-                listener.accept(latest);
-            }
+            Snapshot snapshot = latest;
+            // リスナー（WS broadcast 等）はメインスレッドを塞がないよう非同期で呼び出す
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                for (var listener : listeners) {
+                    listener.accept(snapshot);
+                }
+            });
         }, 20L, 20L);
     }
 
@@ -40,7 +44,10 @@ public class MetricsCollector {
     }
 
     public Map<String, Object> getLatestSnapshotAsMap() {
-        var s = getLatestSnapshot();
+        return toMap(getLatestSnapshot());
+    }
+
+    public Map<String, Object> toMap(Snapshot s) {
         return Map.of(
                 "tps", new double[]{s.tps1(), s.tps5(), s.tps15()},
                 "mspt", s.mspt(),

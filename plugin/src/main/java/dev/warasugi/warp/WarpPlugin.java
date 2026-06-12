@@ -23,6 +23,7 @@ public class WarpPlugin extends JavaPlugin {
     private WebServer webServer;
     private DatabaseManager dbManager;
     private MetricsCollector metricsCollector;
+    private WebSocketAppender webSocketAppender;
 
     @Override
     public void onEnable() {
@@ -59,8 +60,8 @@ public class WarpPlugin extends JavaPlugin {
 
             // WS
             AdminWsHandler wsHandler = new AdminWsHandler(jwtManager);
-            metricsCollector.addListener(snap -> wsHandler.broadcast("metrics", metricsCollector.getLatestSnapshotAsMap()));
-            WebSocketAppender.register(wsHandler, logRepo);
+            metricsCollector.addListener(snap -> wsHandler.broadcast("metrics", metricsCollector.toMap(snap)));
+            webSocketAppender = WebSocketAppender.register(wsHandler, logRepo);
 
             // Handlers
             AuthHandler authHandler = new AuthHandler(totpManager, jwtManager, rateLimiter, config);
@@ -111,6 +112,7 @@ public class WarpPlugin extends JavaPlugin {
     public void onDisable() {
         if (webServer != null) webServer.stop();
         if (metricsCollector != null) metricsCollector.stop();
+        if (webSocketAppender != null) WebSocketAppender.unregister(webSocketAppender);
         if (dbManager != null) {
             try { dbManager.close(); } catch (SQLException e) { /* ignore */ }
         }
