@@ -45,6 +45,24 @@ public class AuthHandler {
             throw new HttpResponseException(401, "Invalid TOTP");
         }
         limiter.reset(ip);
+        issueSession(ctx);
+    }
+
+    public void exchangeOneTimeToken(Context ctx) {
+        String ip = ctx.ip();
+        if (!limiter.isAllowed(ip)) {
+            throw new HttpResponseException(429, "Too many attempts");
+        }
+        record Body(String token) {}
+        var body = ctx.bodyAsClass(Body.class);
+        if (body.token() == null || !isValidOneTimeToken(body.token())) {
+            throw new HttpResponseException(401, "Invalid or expired token");
+        }
+        limiter.reset(ip);
+        issueSession(ctx);
+    }
+
+    private void issueSession(Context ctx) {
         String token = jwt.issue();
         String csrf = UUID.randomUUID().toString();
         setJwtCookie(ctx, token);

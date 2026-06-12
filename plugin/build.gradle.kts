@@ -40,9 +40,13 @@ tasks.test { useJUnitPlatform() }
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }
 
 // ===== Frontend bundling =====
+val isWindows = System.getProperty("os.name").lowercase().contains("win")
+fun npmCommand(vararg args: String): List<String> =
+    if (isWindows) listOf("cmd", "/c", "npm") + args else listOf("npm") + args
+
 val npmBuild by tasks.registering(Exec::class) {
     workingDir = file("../frontend")
-    commandLine("cmd", "/c", "npm", "run", "build")
+    commandLine(npmCommand("run", "build"))
     inputs.dir("../frontend/src")
     inputs.file("../frontend/package.json")
     outputs.dir("../frontend/dist")

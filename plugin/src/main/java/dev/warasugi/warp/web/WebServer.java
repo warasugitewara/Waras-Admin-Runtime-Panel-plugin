@@ -68,6 +68,7 @@ public class WebServer {
         // Auth
         app.post("/api/auth/login", auth::login);
         app.post("/api/auth/logout", auth::logout);
+        app.post("/api/auth/one-time", auth::exchangeOneTimeToken);
 
         // Status
         app.get("/api/status", status::get);
