@@ -77,6 +77,7 @@ public class AuthHandler {
     }
 
     public void logout(Context ctx) {
+        jwt.revokeAll();
         Cookie jwtCookie = new Cookie("jwt", "");
         jwtCookie.setMaxAge(0);
         jwtCookie.setPath("/");
