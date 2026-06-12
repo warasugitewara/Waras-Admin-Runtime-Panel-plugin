@@ -2,10 +2,12 @@ package dev.warasugi.warp.web.handlers;
 
 import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.db.AuditRepository;
+import dev.warasugi.warp.web.ClientIpResolver;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import java.util.Map;
 
 public class ConsoleHandler {
     private final Plugin plugin;
@@ -21,6 +23,9 @@ public class ConsoleHandler {
     public void execute(Context ctx) throws Exception {
         record Body(String command) {}
         var body = ctx.bodyAsClass(Body.class);
+        if (body.command() == null || body.command().isBlank()) {
+            throw new HttpResponseException(400, "command must not be empty");
+        }
         String cmd = body.command().strip();
         String cmdBase = cmd.split(" ")[0].toLowerCase();
         if (config.getCommandBlocklist().contains(cmdBase)) {
@@ -30,7 +35,7 @@ public class ConsoleHandler {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
             return null;
         }).get();
-        audit.insert(System.currentTimeMillis(), ctx.ip(), "console", "{\"cmd\":\"" + cmd + "\"}");
+        audit.record(ClientIpResolver.resolve(ctx), "console", Map.of("cmd", cmd));
         ctx.status(204);
     }
 }

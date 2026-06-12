@@ -4,6 +4,7 @@ import dev.warasugi.warp.auth.JwtManager;
 import dev.warasugi.warp.auth.RateLimiter;
 import dev.warasugi.warp.auth.TotpManager;
 import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.web.ClientIpResolver;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
 import io.javalin.http.HttpResponseException;
@@ -11,6 +12,7 @@ import io.javalin.http.SameSite;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class AuthHandler {
     private volatile TotpManager totp;
@@ -18,6 +20,7 @@ public class AuthHandler {
     private final RateLimiter limiter;
     private final PanelConfig config;
     private final ConcurrentHashMap<String, Long> oneTimeTokens = new ConcurrentHashMap<>();
+    private static final Pattern TOTP_CODE_PATTERN = Pattern.compile("^\\d{6}$");
 
     public void setTotpManager(TotpManager totp) {
         this.totp = totp;
@@ -35,12 +38,15 @@ public class AuthHandler {
         if (currentTotp == null) {
             throw new HttpResponseException(503, "TOTP not configured. Run /warp setup");
         }
-        String ip = ctx.ip();
+        String ip = ClientIpResolver.resolve(ctx);
         if (!limiter.isAllowed(ip)) {
             throw new HttpResponseException(429, "Too many attempts");
         }
         record Body(String code) {}
         var body = ctx.bodyAsClass(Body.class);
+        if (body.code() == null || !TOTP_CODE_PATTERN.matcher(body.code()).matches()) {
+            throw new HttpResponseException(400, "code must be a 6-digit number");
+        }
         if (!currentTotp.verify(body.code())) {
             throw new HttpResponseException(401, "Invalid TOTP");
         }
@@ -49,7 +55,7 @@ public class AuthHandler {
     }
 
     public void exchangeOneTimeToken(Context ctx) {
-        String ip = ctx.ip();
+        String ip = ClientIpResolver.resolve(ctx);
         if (!limiter.isAllowed(ip)) {
             throw new HttpResponseException(429, "Too many attempts");
         }

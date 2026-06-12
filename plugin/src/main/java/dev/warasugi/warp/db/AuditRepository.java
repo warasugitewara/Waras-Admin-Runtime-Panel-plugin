@@ -1,14 +1,18 @@
 package dev.warasugi.warp.db;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AuditRepository {
     private final Connection conn;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public record AuditEntry(long id, long ts, String sourceIp, String action, String detail) {}
 
@@ -25,6 +29,20 @@ public class AuditRepository {
             ps.setString(4, detail);
             ps.executeUpdate();
         }
+    }
+
+    /**
+     * detail を JSON にシリアライズして記録する。手組み文字列連結による
+     * JSON破損・インジェクションを避けるための入口。
+     */
+    public void record(String sourceIp, String action, Map<String, Object> detail) throws SQLException {
+        String json;
+        try {
+            json = mapper.writeValueAsString(detail);
+        } catch (JsonProcessingException e) {
+            json = "{}";
+        }
+        insert(System.currentTimeMillis(), sourceIp, action, json);
     }
 
     public List<AuditEntry> query(int pageSize, int offset) throws SQLException {
