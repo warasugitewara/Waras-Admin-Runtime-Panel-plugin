@@ -15,15 +15,22 @@ import dev.warasugi.warp.web.handlers.*;
 import dev.warasugi.warp.web.middleware.AuthMiddleware;
 import dev.warasugi.warp.web.middleware.CsrfMiddleware;
 import dev.warasugi.warp.ws.AdminWsHandler;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 public class WarpPlugin extends JavaPlugin {
+    private static final long PRUNE_INITIAL_DELAY_TICKS = 20L * 60;
+    private static final long PRUNE_INTERVAL_TICKS = 20L * 60 * 30;
+
     private WebServer webServer;
     private DatabaseManager dbManager;
     private MetricsCollector metricsCollector;
     private WebSocketAppender webSocketAppender;
+    private BukkitTask pruneTask;
 
     @Override
     public void onEnable() {
@@ -88,6 +95,18 @@ public class WarpPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new PlayerHistoryListener(historyRepo), this);
             getServer().getPluginManager().registerEvents(new ChatListener(this, chatRepo), this);
 
+            // 保持上限 (storage.*-max-rows) を超えたログ/チャット/履歴を定期的にプルーニング
+            // audit は長期保持のため意図的にプルーニング対象外
+            pruneTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+                try {
+                    logRepo.pruneToMax(config.getLogsMaxRows());
+                    chatRepo.pruneToMax(config.getChatMaxRows());
+                    historyRepo.pruneToMax(config.getHistoryMaxRows());
+                } catch (SQLException e) {
+                    getLogger().log(Level.WARNING, "保持上限のプルーニングに失敗しました", e);
+                }
+            }, PRUNE_INITIAL_DELAY_TICKS, PRUNE_INTERVAL_TICKS);
+
             // Command
             WarpCommand warpCommand = new WarpCommand(this, authHandler, metricsCollector);
             var cmd = getCommand("warp");
@@ -110,6 +129,7 @@ public class WarpPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (pruneTask != null) pruneTask.cancel();
         if (webServer != null) webServer.stop();
         if (metricsCollector != null) metricsCollector.stop();
         if (webSocketAppender != null) WebSocketAppender.unregister(webSocketAppender);

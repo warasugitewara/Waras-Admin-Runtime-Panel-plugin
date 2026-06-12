@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 public class MetricsCollector {
     public record Snapshot(double tps1, double tps5, double tps15, double mspt,
-                           int players, long uptime, long memoryUsedMb) {}
+                           int players, long memoryUsedMb) {}
 
     private volatile Snapshot latest;
     private BukkitTask task;
@@ -67,7 +67,7 @@ public class MetricsCollector {
                 tps.length > 0 ? tps[0] : 20.0,
                 tps.length > 1 ? tps[1] : 20.0,
                 tps.length > 2 ? tps[2] : 20.0,
-                mspt, players, System.currentTimeMillis(), memMb
+                mspt, players, memMb
         );
     }
 

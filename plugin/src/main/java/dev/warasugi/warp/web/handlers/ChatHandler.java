@@ -3,6 +3,7 @@ package dev.warasugi.warp.web.handlers;
 import dev.warasugi.warp.db.AuditRepository;
 import dev.warasugi.warp.db.ChatRepository;
 import dev.warasugi.warp.web.ClientIpResolver;
+import dev.warasugi.warp.web.PagingParams;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import net.kyori.adventure.text.Component;
@@ -22,7 +23,7 @@ public class ChatHandler {
     }
 
     public void getChat(Context ctx) throws Exception {
-        int page = parseInt(ctx.queryParam("page"), 0);
+        int page = PagingParams.page(ctx);
         ctx.json(chat.query(null, 100, page * 100));
     }
 
@@ -39,9 +40,5 @@ public class ChatHandler {
         chat.insert(System.currentTimeMillis(), "admin", "Admin", body.message());
         audit.record(ClientIpResolver.resolve(ctx), "chat", Map.of("msg", body.message()));
         ctx.status(204);
-    }
-
-    private int parseInt(String s, int def) {
-        try { return s != null ? Integer.parseInt(s) : def; } catch (NumberFormatException e) { return def; }
     }
 }
