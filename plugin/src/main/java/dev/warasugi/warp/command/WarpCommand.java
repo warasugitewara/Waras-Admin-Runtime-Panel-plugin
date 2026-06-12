@@ -16,17 +16,11 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
     private final AuthHandler auth;
     private final MetricsCollector metrics;
-    // TotpManager を外から受け取る (setup でセットする場合もあるため)
-    private TotpManager totpManagerRef; // mutable — setup時に設定
 
     public WarpCommand(Plugin plugin, AuthHandler auth, MetricsCollector metrics) {
         this.plugin = plugin;
         this.auth = auth;
         this.metrics = metrics;
-    }
-
-    public void setTotpManager(TotpManager totp) {
-        this.totpManagerRef = totp;
     }
 
     @Override
@@ -53,13 +47,14 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
     private void handleSetup(CommandSender sender) {
         String secret = TotpManager.generateSecret();
         TotpManager newTotp = new TotpManager(secret);
-        this.totpManagerRef = newTotp;
         auth.setTotpManager(newTotp);
-        sender.sendMessage("§6[WARP] §aNew TOTP secret generated!");
+        plugin.getConfig().set("auth.totp-secret", secret);
+        plugin.saveConfig();
+        sender.sendMessage("§6[WARP] §aNew TOTP secret generated and saved!");
         sender.sendMessage("§7Secret: §e" + secret);
         sender.sendMessage("§7QR URI: §e" + newTotp.getQrUri("WARP"));
         sender.sendMessage("§7Scan the QR URI with Google Authenticator / Authy");
-        sender.sendMessage("§c§lIMPORTANT: §7Add 'totp-secret: " + secret + "' to plugins/WARP/config.yml and reload!");
+        sender.sendMessage("§aLogin is active immediately — no reload required.");
     }
 
     private void handleStatus(CommandSender sender) {

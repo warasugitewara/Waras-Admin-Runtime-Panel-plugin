@@ -7,6 +7,8 @@ import dev.warasugi.warp.command.WarpCommand;
 import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.console.WebSocketAppender;
 import dev.warasugi.warp.db.*;
+import dev.warasugi.warp.listener.ChatListener;
+import dev.warasugi.warp.listener.PlayerHistoryListener;
 import dev.warasugi.warp.metrics.MetricsCollector;
 import dev.warasugi.warp.web.WebServer;
 import dev.warasugi.warp.web.handlers.*;
@@ -61,8 +63,7 @@ public class WarpPlugin extends JavaPlugin {
             WebSocketAppender.register(wsHandler, logRepo);
 
             // Handlers
-            TotpManager effectiveTotp = totpManager != null ? totpManager : new TotpManager("DUMMY");
-            AuthHandler authHandler = new AuthHandler(effectiveTotp, jwtManager, rateLimiter, config);
+            AuthHandler authHandler = new AuthHandler(totpManager, jwtManager, rateLimiter, config);
             StatusHandler statusHandler = new StatusHandler(metricsCollector);
             PlayerHandler playerHandler = new PlayerHandler(this);
             BanHandler banHandler = new BanHandler(this, auditRepo);
@@ -82,9 +83,12 @@ public class WarpPlugin extends JavaPlugin {
                     logHandler, historyHandler, wsHandler, authMw, csrfMw);
             webServer.start(config.getHost(), config.getPort());
 
+            // Listeners
+            getServer().getPluginManager().registerEvents(new PlayerHistoryListener(historyRepo), this);
+            getServer().getPluginManager().registerEvents(new ChatListener(this, chatRepo), this);
+
             // Command
             WarpCommand warpCommand = new WarpCommand(this, authHandler, metricsCollector);
-            if (totpManager != null) warpCommand.setTotpManager(totpManager);
             var cmd = getCommand("warp");
             if (cmd != null) {
                 cmd.setExecutor(warpCommand);

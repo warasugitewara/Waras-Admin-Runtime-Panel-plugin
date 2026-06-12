@@ -30,6 +30,7 @@ public class ChatHandler {
             Bukkit.broadcast(Component.text("[WARP] " + body.message()));
             return null;
         }).get();
+        chat.insert(System.currentTimeMillis(), "admin", "Admin", body.message());
         audit.insert(System.currentTimeMillis(), ctx.ip(), "chat", "{\"msg\":\"" + body.message() + "\"}");
         ctx.status(204);
     }

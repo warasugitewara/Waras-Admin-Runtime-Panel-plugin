@@ -13,7 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthHandler {
-    private TotpManager totp;
+    private volatile TotpManager totp;
     private final JwtManager jwt;
     private final RateLimiter limiter;
     private final PanelConfig config;
@@ -31,13 +31,17 @@ public class AuthHandler {
     }
 
     public void login(Context ctx) {
+        TotpManager currentTotp = this.totp;
+        if (currentTotp == null) {
+            throw new HttpResponseException(503, "TOTP not configured. Run /warp setup");
+        }
         String ip = ctx.ip();
         if (!limiter.isAllowed(ip)) {
             throw new HttpResponseException(429, "Too many attempts");
         }
         record Body(String code) {}
         var body = ctx.bodyAsClass(Body.class);
-        if (!this.totp.verify(body.code())) {
+        if (!currentTotp.verify(body.code())) {
             throw new HttpResponseException(401, "Invalid TOTP");
         }
         limiter.reset(ip);
