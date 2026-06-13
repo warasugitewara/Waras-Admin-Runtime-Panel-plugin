@@ -1,6 +1,6 @@
 package dev.warasugi.warp.web.handlers;
 
-import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.config.ConfigProvider;
 import dev.warasugi.warp.db.AuditRepository;
 import dev.warasugi.warp.web.ClientIpResolver;
 import dev.warasugi.warp.web.RouteRegistrar;
@@ -13,10 +13,10 @@ import java.util.Map;
 
 public class ConsoleHandler implements RouteRegistrar {
     private final Plugin plugin;
-    private final PanelConfig config;
+    private final ConfigProvider config;
     private final AuditRepository audit;
 
-    public ConsoleHandler(Plugin plugin, PanelConfig config, AuditRepository audit) {
+    public ConsoleHandler(Plugin plugin, ConfigProvider config, AuditRepository audit) {
         this.plugin = plugin;
         this.config = config;
         this.audit = audit;
@@ -42,7 +42,7 @@ public class ConsoleHandler implements RouteRegistrar {
         // "minecraft:stop" のような名前空間付き表記も比較できるよう ":" 以降を取り出す
         int colonIdx = rawCmdBase.indexOf(':');
         String cmdBase = colonIdx >= 0 ? rawCmdBase.substring(colonIdx + 1) : rawCmdBase;
-        boolean blocked = config.getCommandBlocklist().stream()
+        boolean blocked = config.get().getCommandBlocklist().stream()
                 .anyMatch(b -> b.toLowerCase().equals(cmdBase));
         if (blocked) {
             throw new HttpResponseException(403, "Command blocked");

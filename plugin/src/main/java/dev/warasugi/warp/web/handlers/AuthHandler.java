@@ -3,7 +3,7 @@ package dev.warasugi.warp.web.handlers;
 import dev.warasugi.warp.auth.JwtManager;
 import dev.warasugi.warp.auth.RateLimiter;
 import dev.warasugi.warp.auth.TotpManager;
-import dev.warasugi.warp.config.PanelConfig;
+import dev.warasugi.warp.config.ConfigProvider;
 import dev.warasugi.warp.web.ClientIpResolver;
 import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
@@ -20,7 +20,7 @@ public class AuthHandler implements RouteRegistrar {
     private volatile TotpManager totp;
     private final JwtManager jwt;
     private final RateLimiter limiter;
-    private final PanelConfig config;
+    private final ConfigProvider config;
     private final ConcurrentHashMap<String, Long> oneTimeTokens = new ConcurrentHashMap<>();
     private static final Pattern TOTP_CODE_PATTERN = Pattern.compile("^\\d{6}$");
 
@@ -28,7 +28,7 @@ public class AuthHandler implements RouteRegistrar {
         this.totp = totp;
     }
 
-    public AuthHandler(TotpManager totp, JwtManager jwt, RateLimiter limiter, PanelConfig config) {
+    public AuthHandler(TotpManager totp, JwtManager jwt, RateLimiter limiter, ConfigProvider config) {
         this.totp = totp;
         this.jwt = jwt;
         this.limiter = limiter;
@@ -116,7 +116,7 @@ public class AuthHandler implements RouteRegistrar {
         c.setSecure(true);
         c.setSameSite(SameSite.STRICT);
         c.setPath("/");
-        c.setMaxAge(config.getSessionHours() * 3600);
+        c.setMaxAge(config.get().getSessionHours() * 3600);
         ctx.cookie(c);
     }
 
@@ -126,7 +126,7 @@ public class AuthHandler implements RouteRegistrar {
         c.setSecure(true);
         c.setSameSite(SameSite.STRICT);
         c.setPath("/");
-        c.setMaxAge(config.getSessionHours() * 3600);
+        c.setMaxAge(config.get().getSessionHours() * 3600);
         ctx.cookie(c);
     }
 }

@@ -1,6 +1,7 @@
 package dev.warasugi.warp.command;
 
 import dev.warasugi.warp.auth.TotpManager;
+import dev.warasugi.warp.config.ConfigProvider;
 import dev.warasugi.warp.web.handlers.AuthHandler;
 import dev.warasugi.warp.metrics.MetricsCollector;
 import org.bukkit.command.Command;
@@ -16,11 +17,13 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
     private final AuthHandler auth;
     private final MetricsCollector metrics;
+    private final ConfigProvider configProvider;
 
-    public WarpCommand(Plugin plugin, AuthHandler auth, MetricsCollector metrics) {
+    public WarpCommand(Plugin plugin, AuthHandler auth, MetricsCollector metrics, ConfigProvider configProvider) {
         this.plugin = plugin;
         this.auth = auth;
         this.metrics = metrics;
+        this.configProvider = configProvider;
     }
 
     @Override
@@ -50,6 +53,7 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
         auth.setTotpManager(newTotp);
         plugin.getConfig().set("auth.totp-secret", secret);
         plugin.saveConfig();
+        configProvider.reload(plugin.getConfig());
         sender.sendMessage("§6[WARP] §aNew TOTP secret generated and saved!");
         sender.sendMessage("§7Secret: §e" + secret);
         sender.sendMessage("§7QR URI: §e" + newTotp.getQrUri("WARP"));
@@ -70,11 +74,14 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
 
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
-        String newSecret = plugin.getConfig().getString("auth.totp-secret", "");
+        configProvider.reload(plugin.getConfig());
+        String newSecret = configProvider.get().getTotpSecret();
         if (newSecret != null && !newSecret.isBlank()) {
             auth.setTotpManager(new TotpManager(newSecret));
         }
         sender.sendMessage("§6[WARP] §aconfig.yml reloaded.");
+        sender.sendMessage("§7反映済み: totp-secret / command-blocklist / storage 保持上限 / session-hours(Cookie寿命のみ)");
+        sender.sendMessage("§7再起動が必要: server.host / server.port / server.cors-origins / auth.login-* / session-hours(JWT本体のTTL)");
     }
 
     private void handleToken(CommandSender sender) {

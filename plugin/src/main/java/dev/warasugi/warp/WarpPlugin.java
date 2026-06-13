@@ -4,6 +4,7 @@ import dev.warasugi.warp.auth.JwtManager;
 import dev.warasugi.warp.auth.RateLimiter;
 import dev.warasugi.warp.auth.TotpManager;
 import dev.warasugi.warp.command.WarpCommand;
+import dev.warasugi.warp.config.ConfigProvider;
 import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.console.WebSocketAppender;
 import dev.warasugi.warp.db.*;
@@ -34,6 +35,7 @@ public class WarpPlugin extends JavaPlugin {
     private MetricsCollector metricsCollector;
     private WebSocketAppender webSocketAppender;
     private BukkitTask pruneTask;
+    private ConfigProvider configProvider;
 
     private record DatabaseContext(
             LogRepository logRepo,
@@ -82,7 +84,9 @@ public class WarpPlugin extends JavaPlugin {
 
     private PanelConfig initConfig() {
         saveDefaultConfig();
-        return new PanelConfig(getConfig());
+        PanelConfig config = new PanelConfig(getConfig());
+        configProvider = new ConfigProvider(config);
+        return config;
     }
 
     private DatabaseContext initDatabase() throws SQLException {
@@ -108,7 +112,7 @@ public class WarpPlugin extends JavaPlugin {
         );
 
         RateLimiter rateLimiter = new RateLimiter(config.getLoginMaxAttempts(), config.getLoginLockoutMs());
-        AuthHandler authHandler = new AuthHandler(totpManager, jwtManager, rateLimiter, config);
+        AuthHandler authHandler = new AuthHandler(totpManager, jwtManager, rateLimiter, configProvider);
         return new AuthContext(totpManager, jwtManager, rateLimiter, authHandler);
     }
 
@@ -126,7 +130,7 @@ public class WarpPlugin extends JavaPlugin {
         PlayerHandler playerHandler = new PlayerHandler(this);
         BanHandler banHandler = new BanHandler(this, db.auditRepo());
         ChatHandler chatHandler = new ChatHandler(this, db.chatRepo(), db.auditRepo());
-        ConsoleHandler consoleHandler = new ConsoleHandler(this, config, db.auditRepo());
+        ConsoleHandler consoleHandler = new ConsoleHandler(this, configProvider, db.auditRepo());
         LogHandler logHandler = new LogHandler(db.logRepo());
         HistoryHandler historyHandler = new HistoryHandler(db.historyRepo());
 
@@ -147,9 +151,9 @@ public class WarpPlugin extends JavaPlugin {
         // audit は長期保持のため意図的にプルーニング対象外
         pruneTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             try {
-                db.logRepo().pruneToMax(config.getLogsMaxRows());
-                db.chatRepo().pruneToMax(config.getChatMaxRows());
-                db.historyRepo().pruneToMax(config.getHistoryMaxRows());
+                db.logRepo().pruneToMax(configProvider.get().getLogsMaxRows());
+                db.chatRepo().pruneToMax(configProvider.get().getChatMaxRows());
+                db.historyRepo().pruneToMax(configProvider.get().getHistoryMaxRows());
             } catch (SQLException e) {
                 getLogger().log(Level.WARNING, "保持上限のプルーニングに失敗しました", e);
             }
@@ -157,7 +161,7 @@ public class WarpPlugin extends JavaPlugin {
     }
 
     private void initCommands(AuthHandler authHandler) {
-        WarpCommand warpCommand = new WarpCommand(this, authHandler, metricsCollector);
+        WarpCommand warpCommand = new WarpCommand(this, authHandler, metricsCollector, configProvider);
         var cmd = getCommand("warp");
         if (cmd != null) {
             cmd.setExecutor(warpCommand);
