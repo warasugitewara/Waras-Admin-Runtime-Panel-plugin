@@ -41,11 +41,12 @@ public class WebSocketAppender extends AbstractAppender {
         // 塞がないよう専用ワーカースレッドへ委譲する
         try {
             executor.submit(() -> {
-                ws.broadcast("log", Map.of("level", level, "msg", message, "time", ts));
                 try {
+                    ws.broadcast("log", Map.of("level", level, "msg", message, "time", ts));
                     logRepo.insert(ts, level, logger, message);
                 } catch (Exception e) {
-                    // ignore db errors in log path
+                    // ログ出力経路内のため、通常のLoggerは再帰呼び出しの恐れがある。System.errに直接出力する。
+                    System.err.println("[WARP] ログ配信/DB保存に失敗しました: " + e);
                 }
             });
         } catch (RejectedExecutionException ignored) {

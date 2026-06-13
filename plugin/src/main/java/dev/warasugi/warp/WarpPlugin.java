@@ -177,7 +177,7 @@ public class WarpPlugin extends JavaPlugin {
         if (metricsCollector != null) metricsCollector.stop();
         if (webSocketAppender != null) WebSocketAppender.unregister(webSocketAppender);
         if (dbManager != null) {
-            try { dbManager.close(); } catch (SQLException e) { /* ignore */ }
+            try { dbManager.close(); } catch (SQLException e) { getLogger().log(Level.WARNING, "DB接続のクローズに失敗しました", e); }
         }
         getLogger().info("WARP 停止完了");
     }

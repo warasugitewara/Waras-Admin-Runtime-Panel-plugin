@@ -55,11 +55,14 @@ public class AdminWsHandler implements RouteRegistrar {
                 try {
                     session.send(json);
                 } catch (Exception ignored) {
+                    // 切断済みクライアントへの送信失敗は想定内のため握り潰す
                     sessions.remove(session);
                 }
             }
         } catch (Exception e) {
-            // ignore serialization errors
+            // WebSocketAppender経由のログ配信中に呼ばれるため、
+            // 通常のLogger(log4j root)を使うと再帰呼び出しになる恐れがある。System.errに直接出力する。
+            System.err.println("[WARP] WebSocket broadcast に失敗しました: " + e);
         }
     }
 }

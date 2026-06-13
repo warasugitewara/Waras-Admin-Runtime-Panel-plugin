@@ -4,6 +4,7 @@ import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.web.middleware.AuthMiddleware;
 import dev.warasugi.warp.web.middleware.CsrfMiddleware;
 import io.javalin.Javalin;
+import io.javalin.http.HttpResponseException;
 import io.javalin.http.staticfiles.Location;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -15,9 +16,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 
 public class WebServer {
 
@@ -57,6 +60,17 @@ public class WebServer {
         for (RouteRegistrar handler : handlers) {
             handler.register(app);
         }
+
+        // 統一エラーレスポンス形式: {"error": "...", "code": ...}
+        app.exception(HttpResponseException.class, (e, ctx) -> {
+            ctx.status(e.getStatus());
+            ctx.json(Map.of("error", e.getMessage(), "code", e.getStatus()));
+        });
+        app.exception(Exception.class, (e, ctx) -> {
+            plugin.getLogger().log(Level.SEVERE, "Unhandled error: " + ctx.method() + " " + ctx.path(), e);
+            ctx.status(500);
+            ctx.json(Map.of("error", "Internal Server Error", "code", 500));
+        });
     }
 
     /**

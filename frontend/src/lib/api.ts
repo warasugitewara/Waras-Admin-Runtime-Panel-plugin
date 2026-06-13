@@ -37,7 +37,16 @@ async function request<T>(
     if (res.status === 401) {
       window.location.href = '/login'
     }
-    throw new ApiError(res.status, res.statusText)
+    let message = res.statusText
+    try {
+      const data = await res.json()
+      if (data && typeof data.error === 'string') {
+        message = data.error
+      }
+    } catch {
+      // JSON以外のエラーレスポンスはstatusTextを使う
+    }
+    throw new ApiError(res.status, message)
   }
   const text = await res.text()
   if (!text) return undefined as T
