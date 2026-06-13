@@ -7,10 +7,20 @@ interface Ban {
   expires: number | null
 }
 
+const DURATION_OPTIONS: { label: string; seconds: number | undefined }[] = [
+  { label: '永久', seconds: undefined },
+  { label: '1時間', seconds: 60 * 60 },
+  { label: '1日', seconds: 60 * 60 * 24 },
+  { label: '3日', seconds: 60 * 60 * 24 * 3 },
+  { label: '7日', seconds: 60 * 60 * 24 * 7 },
+  { label: '30日', seconds: 60 * 60 * 24 * 30 },
+]
+
 export default function Bans() {
   const [bans, setBans] = useState<Ban[]>([])
   const [newPlayer, setNewPlayer] = useState('')
   const [newReason, setNewReason] = useState('')
+  const [newDuration, setNewDuration] = useState(DURATION_OPTIONS[0].label)
 
   const reload = () => api.bans().then(d => setBans(d as Ban[]))
 
@@ -19,9 +29,11 @@ export default function Bans() {
   async function addBan(e: React.FormEvent) {
     e.preventDefault()
     if (!newPlayer.trim()) return
-    await api.addBan(newPlayer, newReason || 'Banned by WARP')
+    const duration = DURATION_OPTIONS.find(o => o.label === newDuration)?.seconds
+    await api.addBan(newPlayer, newReason || 'Banned by WARP', duration)
     setNewPlayer('')
     setNewReason('')
+    setNewDuration(DURATION_OPTIONS[0].label)
     reload()
   }
 
@@ -43,6 +55,16 @@ export default function Bans() {
           className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
           style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
         />
+        <select
+          value={newDuration}
+          onChange={e => setNewDuration(e.target.value)}
+          className="px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
+          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          {DURATION_OPTIONS.map(o => (
+            <option key={o.label} value={o.label}>{o.label}</option>
+          ))}
+        </select>
         <button
           type="submit"
           className="px-4 py-2 rounded-lg text-sm font-medium text-white"

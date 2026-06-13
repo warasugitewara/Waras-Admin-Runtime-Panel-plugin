@@ -55,7 +55,7 @@ const api = {
     request<unknown[]>('/api/players'),
   bans: () =>
     request<unknown[]>('/api/bans'),
-  addBan: (player: string, reason: string, duration?: string) =>
+  addBan: (player: string, reason: string, duration?: number) =>
     request<void>('/api/bans', 'POST', { player, reason, duration }),
   removeBan: (player: string) =>
     request<void>(`/api/bans/${encodeURIComponent(player)}`, 'DELETE'),

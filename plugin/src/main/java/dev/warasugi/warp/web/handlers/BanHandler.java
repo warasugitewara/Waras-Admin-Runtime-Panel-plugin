@@ -7,7 +7,9 @@ import io.javalin.http.HttpResponseException;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,8 @@ public class BanHandler {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("^\\w{3,16}$");
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$");
+    // Instant.plusSeconds のオーバーフローを避けるための duration 上限 (100年)
+    private static final long MAX_DURATION_SECONDS = 100L * 365 * 24 * 3600;
 
     private final Plugin plugin;
     private final AuditRepository audit;
@@ -44,13 +48,19 @@ public class BanHandler {
     }
 
     public void addBan(Context ctx) throws Exception {
-        record Body(String player, String reason) {}
+        record Body(String player, String reason, Long duration) {}
         var body = ctx.bodyAsClass(Body.class);
         if (body.player() == null || !PLAYER_NAME_PATTERN.matcher(body.player()).matches()) {
             throw new HttpResponseException(400, "player must be a valid Minecraft username (3-16 chars)");
         }
+        if (body.duration() != null && body.duration() > MAX_DURATION_SECONDS) {
+            throw new HttpResponseException(400, "duration too large");
+        }
+        Date expires = (body.duration() != null && body.duration() > 0)
+                ? Date.from(Instant.now().plusSeconds(body.duration()))
+                : null;
         Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-            Bukkit.getBanList(BanList.Type.NAME).addBan(body.player(), body.reason(), null, "WARP");
+            Bukkit.getBanList(BanList.Type.NAME).addBan(body.player(), body.reason(), expires, "WARP");
             return null;
         }).get();
         audit.record(ClientIpResolver.resolve(ctx), "ban",
