@@ -8,6 +8,7 @@ const links = [
   { to: '/bans', label: 'Bans' },
   { to: '/logs', label: 'Logs' },
   { to: '/history', label: 'History' },
+  { to: '/audit', label: 'Audit' },
 ]
 
 export default function Sidebar() {

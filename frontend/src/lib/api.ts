@@ -77,6 +77,8 @@ const api = {
     request<void>('/api/console', 'POST', { command }),
   history: (player: string, page = 0) =>
     request<unknown[]>(`/api/history?player=${encodeURIComponent(player)}&page=${page}`),
+  audit: (page = 0) =>
+    request<unknown[]>(`/api/audit?page=${page}`),
 }
 
 export default api

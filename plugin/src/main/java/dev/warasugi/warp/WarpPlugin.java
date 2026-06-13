@@ -133,13 +133,14 @@ public class WarpPlugin extends JavaPlugin {
         ConsoleHandler consoleHandler = new ConsoleHandler(this, configProvider, db.auditRepo());
         LogHandler logHandler = new LogHandler(db.logRepo());
         HistoryHandler historyHandler = new HistoryHandler(db.historyRepo());
+        AuditHandler auditHandler = new AuditHandler(db.auditRepo());
 
         AuthMiddleware authMw = new AuthMiddleware(auth.jwtManager());
         CsrfMiddleware csrfMw = new CsrfMiddleware();
 
         List<RouteRegistrar> handlers = List.of(
                 auth.authHandler(), statusHandler, playerHandler, banHandler,
-                chatHandler, consoleHandler, logHandler, historyHandler, wsHandler);
+                chatHandler, consoleHandler, logHandler, historyHandler, auditHandler, wsHandler);
 
         webServer = new WebServer(this, getFile(), config, authMw, csrfMw, handlers);
         webServer.start(config.getHost(), config.getPort());
