@@ -151,7 +151,7 @@ cd ..
 # JAR ビルド（フロントエンドを自動バンドル）
 cd plugin
 .\gradlew.bat shadowJar
-# → plugin/build/libs/warp-1.0.3-all.jar
+# → plugin/build/libs/warp-<version>-all.jar
 ```
 
 ## ライセンス

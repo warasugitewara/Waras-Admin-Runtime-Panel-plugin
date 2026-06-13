@@ -32,6 +32,7 @@ tasks.shadowJar {
     relocate("io.javalin", "dev.warasugi.warp.libs.javalin")
     relocate("io.jsonwebtoken", "dev.warasugi.warp.libs.jwt")
     relocate("com.fasterxml.jackson", "dev.warasugi.warp.libs.jackson")
+    relocate("org.apache.commons.codec", "dev.warasugi.warp.libs.commonscodec")
     mergeServiceFiles()
 }
 
@@ -58,6 +59,9 @@ val copyFrontend by tasks.registering(Copy::class) {
     into("src/main/resources/web")
 }
 
-tasks.named("processResources") {
+tasks.processResources {
     dependsOn(copyFrontend)
+    filesMatching("plugin.yml") {
+        expand("version" to project.version)
+    }
 }
