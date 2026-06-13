@@ -2,6 +2,8 @@ package dev.warasugi.warp.web.handlers;
 
 import dev.warasugi.warp.db.AuditRepository;
 import dev.warasugi.warp.web.ClientIpResolver;
+import dev.warasugi.warp.web.RouteRegistrar;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import org.bukkit.BanList;
@@ -17,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("deprecation")
-public class BanHandler {
+public class BanHandler implements RouteRegistrar {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("^\\w{3,16}$");
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$");
@@ -30,6 +32,16 @@ public class BanHandler {
     public BanHandler(Plugin plugin, AuditRepository audit) {
         this.plugin = plugin;
         this.audit = audit;
+    }
+
+    @Override
+    public void register(Javalin app) {
+        app.get("/api/bans", this::getBans);
+        app.post("/api/bans", this::addBan);
+        app.delete("/api/bans/{player}", this::removeBan);
+        app.get("/api/ipbans", this::getIpBans);
+        app.post("/api/ipbans", this::addIpBan);
+        app.delete("/api/ipbans/{ip}", this::removeIpBan);
     }
 
     public void getBans(Context ctx) throws ExecutionException, InterruptedException {

@@ -1,5 +1,7 @@
 package dev.warasugi.warp.web.handlers;
 
+import dev.warasugi.warp.web.RouteRegistrar;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -9,11 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class PlayerHandler {
+public class PlayerHandler implements RouteRegistrar {
     private final Plugin plugin;
 
     public PlayerHandler(Plugin plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public void register(Javalin app) {
+        app.get("/api/players", this::getPlayers);
     }
 
     public void getPlayers(Context ctx) throws ExecutionException, InterruptedException {

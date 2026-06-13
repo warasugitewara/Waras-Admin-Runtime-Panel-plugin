@@ -1,17 +1,8 @@
 package dev.warasugi.warp.web;
 
 import dev.warasugi.warp.config.PanelConfig;
-import dev.warasugi.warp.web.handlers.AuthHandler;
-import dev.warasugi.warp.web.handlers.BanHandler;
-import dev.warasugi.warp.web.handlers.ChatHandler;
-import dev.warasugi.warp.web.handlers.ConsoleHandler;
-import dev.warasugi.warp.web.handlers.HistoryHandler;
-import dev.warasugi.warp.web.handlers.LogHandler;
-import dev.warasugi.warp.web.handlers.PlayerHandler;
-import dev.warasugi.warp.web.handlers.StatusHandler;
 import dev.warasugi.warp.web.middleware.AuthMiddleware;
 import dev.warasugi.warp.web.middleware.CsrfMiddleware;
-import dev.warasugi.warp.ws.AdminWsHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import org.bukkit.Bukkit;
@@ -34,10 +25,8 @@ public class WebServer {
     private final Plugin plugin;
 
     public WebServer(Plugin plugin, File pluginJar, PanelConfig config,
-                     AuthHandler auth, StatusHandler status, PlayerHandler player,
-                     BanHandler ban, ChatHandler chat, ConsoleHandler console,
-                     LogHandler log, HistoryHandler history,
-                     AdminWsHandler ws, AuthMiddleware authMw, CsrfMiddleware csrfMw) throws Exception {
+                     AuthMiddleware authMw, CsrfMiddleware csrfMw,
+                     List<RouteRegistrar> handlers) throws Exception {
         this.plugin = plugin;
 
         // クラスローダーに依存せず物理 JAR から直接展開する（PluginRemapper 対策）
@@ -65,44 +54,9 @@ public class WebServer {
         app.before(authMw::handle);
         app.before(csrfMw::handle);
 
-        // Auth
-        app.post("/api/auth/login", auth::login);
-        app.post("/api/auth/logout", auth::logout);
-        app.post("/api/auth/one-time", auth::exchangeOneTimeToken);
-
-        // Status
-        app.get("/api/status", status::get);
-
-        // Players
-        app.get("/api/players", player::getPlayers);
-
-        // Bans
-        app.get("/api/bans", ban::getBans);
-        app.post("/api/bans", ban::addBan);
-        app.delete("/api/bans/{player}", ban::removeBan);
-        app.get("/api/ipbans", ban::getIpBans);
-        app.post("/api/ipbans", ban::addIpBan);
-        app.delete("/api/ipbans/{ip}", ban::removeIpBan);
-
-        // Chat
-        app.get("/api/chat", chat::getChat);
-        app.post("/api/chat", chat::sendChat);
-
-        // Console
-        app.post("/api/console", console::execute);
-
-        // Logs
-        app.get("/api/logs", log::getLogs);
-
-        // History
-        app.get("/api/history", history::getHistory);
-
-        // WebSocket
-        app.ws("/ws", wsConfig -> {
-            wsConfig.onConnect(ws::onConnect);
-            wsConfig.onClose(ws::onClose);
-            wsConfig.onError(ws::onError);
-        });
+        for (RouteRegistrar handler : handlers) {
+            handler.register(app);
+        }
     }
 
     /**

@@ -4,6 +4,8 @@ import dev.warasugi.warp.db.AuditRepository;
 import dev.warasugi.warp.db.ChatRepository;
 import dev.warasugi.warp.web.ClientIpResolver;
 import dev.warasugi.warp.web.PagingParams;
+import dev.warasugi.warp.web.RouteRegistrar;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import net.kyori.adventure.text.Component;
@@ -11,7 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import java.util.Map;
 
-public class ChatHandler {
+public class ChatHandler implements RouteRegistrar {
     private final Plugin plugin;
     private final ChatRepository chat;
     private final AuditRepository audit;
@@ -20,6 +22,12 @@ public class ChatHandler {
         this.plugin = plugin;
         this.chat = chat;
         this.audit = audit;
+    }
+
+    @Override
+    public void register(Javalin app) {
+        app.get("/api/chat", this::getChat);
+        app.post("/api/chat", this::sendChat);
     }
 
     public void getChat(Context ctx) throws Exception {

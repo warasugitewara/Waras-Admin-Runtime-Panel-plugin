@@ -5,6 +5,8 @@ import dev.warasugi.warp.auth.RateLimiter;
 import dev.warasugi.warp.auth.TotpManager;
 import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.web.ClientIpResolver;
+import dev.warasugi.warp.web.RouteRegistrar;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
 import io.javalin.http.HttpResponseException;
@@ -14,7 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class AuthHandler {
+public class AuthHandler implements RouteRegistrar {
     private volatile TotpManager totp;
     private final JwtManager jwt;
     private final RateLimiter limiter;
@@ -31,6 +33,13 @@ public class AuthHandler {
         this.jwt = jwt;
         this.limiter = limiter;
         this.config = config;
+    }
+
+    @Override
+    public void register(Javalin app) {
+        app.post("/api/auth/login", this::login);
+        app.post("/api/auth/logout", this::logout);
+        app.post("/api/auth/one-time", this::exchangeOneTimeToken);
     }
 
     public void login(Context ctx) {

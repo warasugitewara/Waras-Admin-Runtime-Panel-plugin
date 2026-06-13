@@ -3,13 +3,15 @@ package dev.warasugi.warp.web.handlers;
 import dev.warasugi.warp.config.PanelConfig;
 import dev.warasugi.warp.db.AuditRepository;
 import dev.warasugi.warp.web.ClientIpResolver;
+import dev.warasugi.warp.web.RouteRegistrar;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import java.util.Map;
 
-public class ConsoleHandler {
+public class ConsoleHandler implements RouteRegistrar {
     private final Plugin plugin;
     private final PanelConfig config;
     private final AuditRepository audit;
@@ -18,6 +20,11 @@ public class ConsoleHandler {
         this.plugin = plugin;
         this.config = config;
         this.audit = audit;
+    }
+
+    @Override
+    public void register(Javalin app) {
+        app.post("/api/console", this::execute);
     }
 
     public void execute(Context ctx) throws Exception {
