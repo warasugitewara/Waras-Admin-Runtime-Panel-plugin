@@ -39,7 +39,7 @@ Paper BanList (BAN の SoT)
 | Web Server | Javalin 6 (Virtual Threads) |
 | 認証 | TOTP (RFC 6238), JWT (jjwt 0.12.6), HttpOnly Cookie |
 | DB | SQLite (xerial 3.46) |
-| API 型安全 | Javalin OpenAPI → openapi-typescript |
+| API 型 | 手書き型定義（`api.ts`） — OpenAPI 自動生成は未対応 |
 | Frontend | React 19 + TypeScript 5 + Vite 8 + Tailwind 4 |
 | グラフ | ApexCharts |
 | ターミナル | xterm.js 5 |
