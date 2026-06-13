@@ -59,14 +59,12 @@ export default function Terminal() {
         <input
           value={cmd}
           onChange={e => setCmd(e.target.value)}
-          className="flex-1 px-4 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="flex-1 px-4 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
           placeholder="コマンドを入力..."
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ backgroundColor: '#10b981' }}
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-warp-accent"
         >
           実行
         </button>

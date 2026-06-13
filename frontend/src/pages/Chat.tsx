@@ -40,13 +40,13 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-full p-4 gap-3">
       <h2 className="text-lg font-semibold text-white">チャット</h2>
-      <div className="flex-1 overflow-y-auto space-y-2 rounded-xl p-3" style={{ backgroundColor: '#141c35' }}>
+      <div className="flex-1 overflow-y-auto space-y-2 rounded-xl p-3 bg-warp-panel">
         {messages.map(m => (
           <div key={m.id} className="flex gap-2 text-sm">
             <span className="text-gray-500 text-xs shrink-0">
               {new Date(m.ts).toLocaleTimeString('ja-JP')}
             </span>
-            <span style={{ color: '#10b981' }} className="font-medium shrink-0">{m.playerName}</span>
+            <span className="font-medium shrink-0 text-warp-accent">{m.playerName}</span>
             <span className="text-gray-300">{m.message}</span>
           </div>
         ))}
@@ -56,14 +56,12 @@ export default function Chat() {
         <input
           value={msg}
           onChange={e => setMsg(e.target.value)}
-          className="flex-1 px-4 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="flex-1 px-4 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
           placeholder="メッセージを送信..."
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ backgroundColor: '#10b981' }}
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-warp-accent"
         >
           送信
         </button>

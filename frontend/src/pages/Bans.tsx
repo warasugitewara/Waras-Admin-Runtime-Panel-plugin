@@ -45,21 +45,18 @@ export default function Bans() {
           value={newPlayer}
           onChange={e => setNewPlayer(e.target.value)}
           placeholder="プレイヤー名"
-          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
         />
         <input
           value={newReason}
           onChange={e => setNewReason(e.target.value)}
           placeholder="理由 (任意)"
-          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
         />
         <select
           value={newDuration}
           onChange={e => setNewDuration(e.target.value)}
-          className="px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="px-3 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
         >
           {DURATION_OPTIONS.map(o => (
             <option key={o.label} value={o.label}>{o.label}</option>
@@ -73,10 +70,10 @@ export default function Bans() {
           BAN
         </button>
       </form>
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#141c35' }}>
+      <div className="rounded-xl overflow-hidden bg-warp-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-400 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <tr className="text-left text-gray-400 border-b border-white/5">
               <th className="px-4 py-3">プレイヤー</th>
               <th className="px-4 py-3">理由</th>
               <th className="px-4 py-3">期限</th>
@@ -85,7 +82,7 @@ export default function Bans() {
           </thead>
           <tbody>
             {bans.map(b => (
-              <tr key={b.player} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+              <tr key={b.player} className="border-b border-white/3">
                 <td className="px-4 py-3 text-white">{b.player}</td>
                 <td className="px-4 py-3 text-gray-300">{b.reason ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400 text-xs">

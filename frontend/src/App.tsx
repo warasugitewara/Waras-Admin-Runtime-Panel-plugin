@@ -8,8 +8,10 @@ import Bans from './pages/Bans'
 import Logs from './pages/Logs'
 import History from './pages/History'
 import Audit from './pages/Audit'
+import NotFound from './pages/NotFound'
 import RequireAuth from './components/RequireAuth'
 import WsProvider from './components/WsProvider'
+import Layout from './components/layout/Layout'
 
 export default function App() {
   return (
@@ -21,11 +23,12 @@ export default function App() {
           element={
             <RequireAuth>
               <WsProvider>
-                <Dashboard />
+                <Layout />
               </WsProvider>
             </RequireAuth>
           }
         >
+          <Route index element={<Dashboard />} />
           <Route path="terminal" element={<Terminal />} />
           <Route path="players" element={<Players />} />
           <Route path="chat" element={<Chat />} />
@@ -34,6 +37,7 @@ export default function App() {
           <Route path="history" element={<History />} />
           <Route path="audit" element={<Audit />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

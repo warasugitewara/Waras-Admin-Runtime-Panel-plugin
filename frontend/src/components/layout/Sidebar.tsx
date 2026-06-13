@@ -14,11 +14,10 @@ const links = [
 export default function Sidebar() {
   return (
     <aside
-      className="w-48 h-screen flex flex-col py-6 px-3 shrink-0"
-      style={{ backgroundColor: '#111828', borderRight: '1px solid rgba(255,255,255,0.05)' }}
+      className="w-48 h-screen flex flex-col py-6 px-3 shrink-0 bg-warp-sidebar border-r border-white/5"
     >
       <div className="mb-8 px-3">
-        <span className="text-xl font-bold" style={{ color: '#10b981' }}>WARP</span>
+        <span className="text-xl font-bold text-warp-accent">WARP</span>
       </div>
       <nav className="flex flex-col gap-1">
         {links.map(link => (
@@ -29,12 +28,9 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive
-                  ? 'text-white font-medium'
+                  ? 'text-white font-medium bg-warp-accent/15'
                   : 'text-gray-400 hover:text-white'
               }`
-            }
-            style={({ isActive }) =>
-              isActive ? { backgroundColor: 'rgba(16,185,129,0.15)' } : {}
             }
           >
             {link.label}

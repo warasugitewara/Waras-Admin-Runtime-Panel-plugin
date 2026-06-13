@@ -26,10 +26,10 @@ export default function Players() {
       <h2 className="text-lg font-semibold text-white mb-4">
         オンラインプレイヤー ({players.length})
       </h2>
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#141c35' }}>
+      <div className="rounded-xl overflow-hidden bg-warp-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-400 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <tr className="text-left text-gray-400 border-b border-white/5">
               <th className="px-4 py-3">名前</th>
               <th className="px-4 py-3">Ping</th>
               <th className="px-4 py-3">ワールド</th>
@@ -38,7 +38,7 @@ export default function Players() {
           </thead>
           <tbody>
             {players.map(p => (
-              <tr key={p.uuid} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+              <tr key={p.uuid} className="border-b border-white/3">
                 <td className="px-4 py-3 text-white">{p.name}</td>
                 <td className="px-4 py-3 text-gray-300">{p.ping}ms</td>
                 <td className="px-4 py-3 text-gray-300">{p.world}</td>

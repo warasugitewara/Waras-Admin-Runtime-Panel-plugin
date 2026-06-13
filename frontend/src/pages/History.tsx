@@ -31,21 +31,19 @@ export default function History() {
           value={player}
           onChange={e => setPlayer(e.target.value)}
           placeholder="UUID を入力"
-          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none"
-          style={{ backgroundColor: '#141c35', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none bg-warp-panel border border-white/10"
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ backgroundColor: '#10b981' }}
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-warp-accent"
         >
           検索
         </button>
       </form>
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#141c35' }}>
+      <div className="rounded-xl overflow-hidden bg-warp-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-400 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <tr className="text-left text-gray-400 border-b border-white/5">
               <th className="px-4 py-3">時刻</th>
               <th className="px-4 py-3">プレイヤー</th>
               <th className="px-4 py-3">イベント</th>
@@ -54,12 +52,12 @@ export default function History() {
           </thead>
           <tbody>
             {results.map(r => (
-              <tr key={r.id} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+              <tr key={r.id} className="border-b border-white/3">
                 <td className="px-4 py-3 text-gray-400 text-xs">
                   {new Date(r.ts).toLocaleString('ja-JP')}
                 </td>
                 <td className="px-4 py-3 text-white">{r.playerName}</td>
-                <td className="px-4 py-3" style={{ color: '#10b981' }}>{r.eventType}</td>
+                <td className="px-4 py-3 text-warp-accent">{r.eventType}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
                   {r.world} ({r.x?.toFixed(0)}, {r.y?.toFixed(0)}, {r.z?.toFixed(0)})
                 </td>

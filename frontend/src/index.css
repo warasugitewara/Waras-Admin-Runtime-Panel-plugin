@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --color-warp-bg: #0a0e27;
+  --color-warp-panel: #141c35;
+  --color-warp-sidebar: #111828;
+  --color-warp-accent: #10b981;
+}
+
 body {
-  background-color: #0a0e27;
+  background-color: var(--color-warp-bg);
   color: #e5e7eb;
   margin: 0;
   font-family: system-ui, sans-serif;

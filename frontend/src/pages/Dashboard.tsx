@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
-import Sidebar from '../components/layout/Sidebar'
 import TpsChart from '../components/charts/TpsChart'
 import { wsClient } from '../lib/ws'
 
@@ -12,7 +10,7 @@ interface Metrics {
   memoryUsedMb: number
 }
 
-function DashboardHome() {
+export default function Dashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [tpsHistory, setTpsHistory] = useState<number[]>([])
 
@@ -41,36 +39,21 @@ function DashboardHome() {
         {cards.map(card => (
           <div
             key={card.label}
-            className="rounded-xl p-4"
-            style={{ backgroundColor: '#141c35' }}
+            className="rounded-xl p-4 bg-warp-panel"
           >
             <p className="text-xs text-gray-400">{card.label}</p>
-            <p className="text-2xl font-bold mt-1" style={{ color: '#10b981' }}>
+            <p className="text-2xl font-bold mt-1 text-warp-accent">
               {card.value}
             </p>
           </div>
         ))}
       </div>
       {tpsHistory.length > 0 && (
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#141c35' }}>
+        <div className="rounded-xl p-4 bg-warp-panel">
           <p className="text-xs text-gray-400 mb-2">TPS History</p>
           <TpsChart series={tpsHistory} />
         </div>
       )}
-    </div>
-  )
-}
-
-export default function Dashboard() {
-  const location = useLocation()
-  const isRoot = location.pathname === '/'
-
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        {isRoot ? <DashboardHome /> : <Outlet />}
-      </main>
     </div>
   )
 }

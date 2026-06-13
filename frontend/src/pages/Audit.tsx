@@ -20,10 +20,10 @@ export default function Audit() {
   return (
     <div className="p-6 space-y-4">
       <h2 className="text-lg font-semibold text-white">監査ログ</h2>
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#141c35' }}>
+      <div className="rounded-xl overflow-hidden bg-warp-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-400 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <tr className="text-left text-gray-400 border-b border-white/5">
               <th className="px-4 py-3">時刻</th>
               <th className="px-4 py-3">送信元IP</th>
               <th className="px-4 py-3">アクション</th>
@@ -32,12 +32,12 @@ export default function Audit() {
           </thead>
           <tbody>
             {entries.map(e => (
-              <tr key={e.id} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+              <tr key={e.id} className="border-b border-white/3">
                 <td className="px-4 py-3 text-gray-400 text-xs">
                   {new Date(e.ts).toLocaleString('ja-JP')}
                 </td>
                 <td className="px-4 py-3 text-gray-300 font-mono text-xs">{e.sourceIp}</td>
-                <td className="px-4 py-3" style={{ color: '#10b981' }}>{e.action}</td>
+                <td className="px-4 py-3 text-warp-accent">{e.action}</td>
                 <td className="px-4 py-3 text-gray-500 font-mono text-xs truncate max-w-md">{e.detail}</td>
               </tr>
             ))}
@@ -53,8 +53,7 @@ export default function Audit() {
         <button
           onClick={() => setPage(p => Math.max(0, p - 1))}
           disabled={page === 0}
-          className="px-3 py-1 rounded text-sm text-gray-400 disabled:opacity-30"
-          style={{ backgroundColor: '#141c35' }}
+          className="px-3 py-1 rounded text-sm text-gray-400 disabled:opacity-30 bg-warp-panel"
         >
           ← 前
         </button>
@@ -62,8 +61,7 @@ export default function Audit() {
         <button
           onClick={() => setPage(p => p + 1)}
           disabled={entries.length < 100}
-          className="px-3 py-1 rounded text-sm text-gray-400 disabled:opacity-30"
-          style={{ backgroundColor: '#141c35' }}
+          className="px-3 py-1 rounded text-sm text-gray-400 disabled:opacity-30 bg-warp-panel"
         >
           次 →
         </button>
