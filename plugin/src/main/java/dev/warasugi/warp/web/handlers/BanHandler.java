@@ -12,7 +12,6 @@ import org.bukkit.plugin.Plugin;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +33,9 @@ public class BanHandler implements RouteRegistrar {
         this.audit = audit;
     }
 
+    public record BanDto(String player, String reason, Long expires) {}
+    public record IpBanDto(String ip, String reason, Long expires) {}
+
     @Override
     public void register(Javalin app) {
         app.get("/api/bans", this::getBans);
@@ -45,14 +47,11 @@ public class BanHandler implements RouteRegistrar {
     }
 
     public void getBans(Context ctx) throws ExecutionException, InterruptedException {
-        List<Map<String, Object>> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-            List<Map<String, Object>> result = new ArrayList<>();
+        List<BanDto> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+            List<BanDto> result = new ArrayList<>();
             for (var entry : Bukkit.getBanList(BanList.Type.NAME).getEntries()) {
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("player", entry.getTarget());
-                m.put("reason", entry.getReason());
-                m.put("expires", entry.getExpiration() != null ? entry.getExpiration().toInstant().toEpochMilli() : null);
-                result.add(m);
+                Long expires = entry.getExpiration() != null ? entry.getExpiration().toInstant().toEpochMilli() : null;
+                result.add(new BanDto(entry.getTarget(), entry.getReason(), expires));
             }
             return result;
         }).get();
@@ -91,14 +90,11 @@ public class BanHandler implements RouteRegistrar {
     }
 
     public void getIpBans(Context ctx) throws ExecutionException, InterruptedException {
-        List<Map<String, Object>> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-            List<Map<String, Object>> result = new ArrayList<>();
+        List<IpBanDto> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+            List<IpBanDto> result = new ArrayList<>();
             for (var entry : Bukkit.getBanList(BanList.Type.IP).getEntries()) {
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("ip", entry.getTarget());
-                m.put("reason", entry.getReason());
-                m.put("expires", entry.getExpiration() != null ? entry.getExpiration().toInstant().toEpochMilli() : null);
-                result.add(m);
+                Long expires = entry.getExpiration() != null ? entry.getExpiration().toInstant().toEpochMilli() : null;
+                result.add(new IpBanDto(entry.getTarget(), entry.getReason(), expires));
             }
             return result;
         }).get();
