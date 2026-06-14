@@ -1,8 +1,9 @@
 # WARP — Waras-Admin-Runtime-Panel
 
 Paper 1.21.x 対応の Minecraft サーバー向け Web 管理パネルプラグイン。
-
+<img width="1867" height="437" alt="2026-06-14_13h44_23" src="https://github.com/user-attachments/assets/29b08c8e-9759-4084-b097-b8a84e5a71fa" />
 プラグイン内に Javalin による組み込み HTTP/WS サーバーを持ち、Cloudflare Tunnel を経由して安全に外部公開する。フロントエンドは React + TypeScript で構築した SPA で、プラグインの JAR に同梱して配信する。
+
 
 ## 機能
 
@@ -153,6 +154,10 @@ cd plugin
 .\gradlew.bat shadowJar
 # → plugin/build/libs/warp-<version>-all.jar
 ```
+## スクリーンショット
+<img width="1867" height="437" alt="2026-06-14_13h44_23" src="https://github.com/user-attachments/assets/29b08c8e-9759-4084-b097-b8a84e5a71fa" />
+<img width="1872" height="968" alt="2026-06-14_13h43_48" src="https://github.com/user-attachments/assets/8d38b3ab-6282-4c62-8a69-ad4961a4746d" />
+<img width="1874" height="965" alt="2026-06-14_13h55_44" src="https://github.com/user-attachments/assets/2a17a1bd-12ba-4b3f-ac29-52bed5121ed2" />
 
 ## ライセンス
 
