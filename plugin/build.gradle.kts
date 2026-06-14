@@ -3,7 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.3"
 }
 
-version = "1.0.4"
+version = "1.1.0"
 
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -63,6 +63,7 @@ val copyFrontend by tasks.registering(Copy::class) {
 
 tasks.processResources {
     dependsOn(copyFrontend)
+    inputs.property("version", project.version)
     filesMatching("plugin.yml") {
         expand("version" to project.version)
     }
