@@ -161,6 +161,10 @@ cd plugin
 <img width="1872" height="968" alt="2026-06-14_13h43_48" src="https://github.com/user-attachments/assets/8d38b3ab-6282-4c62-8a69-ad4961a4746d" />
 <img width="1874" height="965" alt="2026-06-14_13h55_44" src="https://github.com/user-attachments/assets/2a17a1bd-12ba-4b3f-ac29-52bed5121ed2" />
 
+## TODO
+
+- プラグイン単体の再起動（PlugManの`/plugman reload <plugin>`相当）。Paper標準APIはdisable/enableのみでクラスローダー差し替えを伴う完全リロードは提供しないため、実装方式（クラスローダー再生成のリスク/制約）を別途検討する。
+
 ## ライセンス
 
 MIT
