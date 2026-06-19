@@ -13,7 +13,6 @@ import io.javalin.http.HttpResponseException;
 import io.javalin.http.SameSite;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class AuthHandler implements RouteRegistrar {
@@ -21,11 +20,15 @@ public class AuthHandler implements RouteRegistrar {
     private final JwtManager jwt;
     private final RateLimiter limiter;
     private final ConfigProvider config;
-    private final ConcurrentHashMap<String, Long> oneTimeTokens = new ConcurrentHashMap<>();
     private static final Pattern TOTP_CODE_PATTERN = Pattern.compile("^\\d{6}$");
 
     public void setTotpManager(TotpManager totp) {
         this.totp = totp;
+    }
+
+    public String getCurrentOtpCode() {
+        TotpManager currentTotp = this.totp;
+        return currentTotp == null ? null : currentTotp.getCurrentCode();
     }
 
     public AuthHandler(TotpManager totp, JwtManager jwt, RateLimiter limiter, ConfigProvider config) {
@@ -39,7 +42,6 @@ public class AuthHandler implements RouteRegistrar {
     public void register(Javalin app) {
         app.post("/api/auth/login", this::login);
         app.post("/api/auth/logout", this::logout);
-        app.post("/api/auth/one-time", this::exchangeOneTimeToken);
     }
 
     public void login(Context ctx) {
@@ -58,20 +60,6 @@ public class AuthHandler implements RouteRegistrar {
         }
         if (!currentTotp.verify(body.code())) {
             throw new HttpResponseException(401, "Invalid TOTP");
-        }
-        limiter.reset(ip);
-        issueSession(ctx);
-    }
-
-    public void exchangeOneTimeToken(Context ctx) {
-        String ip = ClientIpResolver.resolve(ctx);
-        if (!limiter.isAllowed(ip)) {
-            throw new HttpResponseException(429, "Too many attempts");
-        }
-        record Body(String token) {}
-        var body = ctx.bodyAsClass(Body.class);
-        if (body.token() == null || !isValidOneTimeToken(body.token())) {
-            throw new HttpResponseException(401, "Invalid or expired token");
         }
         limiter.reset(ip);
         issueSession(ctx);
@@ -96,18 +84,6 @@ public class AuthHandler implements RouteRegistrar {
         csrfCookie.setPath("/");
         ctx.cookie(csrfCookie);
         ctx.status(204);
-    }
-
-    public String issueOneTimeToken() {
-        String token = UUID.randomUUID().toString();
-        long expiry = System.currentTimeMillis() + 5 * 60_000L;
-        oneTimeTokens.put(token, expiry);
-        return token;
-    }
-
-    public boolean isValidOneTimeToken(String token) {
-        Long expiry = oneTimeTokens.remove(token);
-        return expiry != null && System.currentTimeMillis() < expiry;
     }
 
     private void setJwtCookie(Context ctx, String token) {

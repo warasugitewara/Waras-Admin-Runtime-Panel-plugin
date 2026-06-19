@@ -9,7 +9,7 @@ commands:
     description: WARP管理コマンド
     permission: warp.admin
     aliases: [waras-admin-runtime-panel]
-    usage: /warp <setup|status|reload|token>
+    usage: /warp <setup|status|reload|otp>
 permissions:
   warp.admin:
     description: WARP管理者権限

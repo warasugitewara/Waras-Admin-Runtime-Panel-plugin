@@ -1,6 +1,7 @@
 package dev.warasugi.warp.auth;
 
 import dev.samstevens.totp.code.*;
+import dev.samstevens.totp.exceptions.CodeGenerationException;
 import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
@@ -24,6 +25,15 @@ public class TotpManager {
 
     public boolean verify(String code) {
         return verifier.isValidCode(secret, code);
+    }
+
+    public String getCurrentCode() {
+        CodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1);
+        try {
+            return codeGenerator.generate(secret, Math.floorDiv(new SystemTimeProvider().getTime(), 30));
+        } catch (CodeGenerationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getQrUri(String issuer) {

@@ -34,15 +34,15 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length == 0) {
-            sender.sendMessage("§6WARP §7— usage: /warp <setup|status|reload|token>");
+            sender.sendMessage("§6WARP §7— usage: /warp <setup|status|reload|otp>");
             return true;
         }
         switch (args[0].toLowerCase()) {
             case "setup" -> handleSetup(sender);
             case "status" -> handleStatus(sender);
             case "reload" -> handleReload(sender);
-            case "token" -> handleToken(sender);
-            default -> sender.sendMessage("§cUnknown subcommand. Use: setup|status|reload|token");
+            case "otp" -> handleOtp(sender);
+            default -> sender.sendMessage("§cUnknown subcommand. Use: setup|status|reload|otp");
         }
         return true;
     }
@@ -84,12 +84,16 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7再起動が必要: server.host / server.port / server.cors-origins / auth.login-* / session-hours(JWT本体のTTL)");
     }
 
-    private void handleToken(CommandSender sender) {
-        String token = auth.issueOneTimeToken();
-        sender.sendMessage("§6[WARP] §aOne-time token (5min): §e" + token);
+    private void handleOtp(CommandSender sender) {
+        String code = auth.getCurrentOtpCode();
+        if (code == null) {
+            sender.sendMessage("§cTOTP未設定です。/warp setup を実行してください。");
+            return;
+        }
+        sender.sendMessage("§6[WARP] §a現在のログインコード: §e" + code + " §7(30秒ごとに更新)");
     }
 
-    private static final List<String> SUBCOMMANDS = List.of("setup", "status", "reload", "token");
+    private static final List<String> SUBCOMMANDS = List.of("setup", "status", "reload", "otp");
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
