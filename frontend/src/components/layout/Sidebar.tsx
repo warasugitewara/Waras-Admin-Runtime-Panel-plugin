@@ -9,6 +9,7 @@ const links = [
   { to: '/logs', label: 'Logs' },
   { to: '/history', label: 'History' },
   { to: '/audit', label: 'Audit' },
+  { to: '/plugins', label: 'Plugins' },
 ]
 
 export default function Sidebar() {

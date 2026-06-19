@@ -8,6 +8,7 @@ import Bans from './pages/Bans'
 import Logs from './pages/Logs'
 import History from './pages/History'
 import Audit from './pages/Audit'
+import Plugins from './pages/Plugins'
 import NotFound from './pages/NotFound'
 import RequireAuth from './components/RequireAuth'
 import WsProvider from './components/WsProvider'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="logs" element={<Logs />} />
           <Route path="history" element={<History />} />
           <Route path="audit" element={<Audit />} />
+          <Route path="plugins" element={<Plugins />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

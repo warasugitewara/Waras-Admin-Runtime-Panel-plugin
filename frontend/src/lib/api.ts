@@ -88,6 +88,14 @@ const api = {
     request<unknown[]>(`/api/history?player=${encodeURIComponent(player)}&page=${page}`),
   audit: (page = 0) =>
     request<unknown[]>(`/api/audit?page=${page}`),
+  plugins: () =>
+    request<unknown[]>('/api/plugins'),
+  enablePlugin: (name: string) =>
+    request<void>(`/api/plugins/${encodeURIComponent(name)}/enable`, 'POST'),
+  disablePlugin: (name: string) =>
+    request<void>(`/api/plugins/${encodeURIComponent(name)}/disable`, 'POST'),
+  selfUpdate: () =>
+    request<unknown>('/api/plugins/self-update'),
 }
 
 export default api
