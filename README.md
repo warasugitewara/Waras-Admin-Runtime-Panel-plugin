@@ -1,4 +1,4 @@
-# WARP — Waras-Admin-Runtime-Panel
+# WARP — Wara's-Admin-Runtime-Panel
 
 Paper 1.21.x 対応の Minecraft サーバー向け Web 管理パネルプラグイン。
 <img width="1867" height="437" alt="2026-06-14_13h44_23" src="https://github.com/user-attachments/assets/29b08c8e-9759-4084-b097-b8a84e5a71fa" />
