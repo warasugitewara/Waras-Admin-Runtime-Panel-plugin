@@ -24,7 +24,7 @@
 6. **`/api/schemdepot/*` は `GET` のみ。** `post` / `delete` / `put` / `patch` を登録しない。
 7. **`build.gradle.kts` と `plugin.yml` を変更しない。**
 8. **レスポンスにファイルシステムの絶対パスを含めない。** 返すのはファイル名のみ。
-9. **Bukkit API を呼ばない。** このパッケージは純粋な JDBC + NIO のみで完結させる（`callSyncMethod` 不要）。
+9. **サーバー状態に触れる Bukkit API を呼ばない。** このパッケージは JDBC + NIO のみで完結させ、メインスレッドを要求しない（`callSyncMethod` 不要）。唯一の例外は `YamlConfiguration#loadFromString`（下記 §「config.yml の読み方」参照）。これは純粋な YAML パーサでサーバー状態にもメインスレッドにも依存しないため許可する。`Bukkit.*` / `Server` / `World` / `Player` などのランタイム API は禁止。
 10. **その他の既存ファイルを触らない。** 変更してよい既存ファイルは各タスクの `Modify` に挙げたものだけ。
 
 **作業ブランチ:** `feat/schemdepot-integration`
