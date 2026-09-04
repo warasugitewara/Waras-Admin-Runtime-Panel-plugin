@@ -78,14 +78,19 @@ class SchemDepotReadOnlyTest {
                 "SchemDepot 連携のプロダクションコードに書き込み系の操作がある: " + violations);
     }
 
-    /** 行コメント部分を落とす。禁止語をドキュメントとして書けるようにするため。 */
+    /**
+     * 行全体がコメントの行だけを除外する。禁止語を javadoc や行コメントに書けるようにするため。
+     *
+     * 行末コメントは切り落とさない。文字列リテラル中の "//"（URL など）をコメント開始と
+     * 誤認すると、その後ろに続く実コードごと検査対象から外れてしまうため。
+     * 誤検知して落ちるほうが、見逃して通るより安全。
+     */
     private static String stripComment(String line) {
         String trimmed = line.stripLeading();
         if (trimmed.startsWith("*") || trimmed.startsWith("/*") || trimmed.startsWith("//")) {
             return "";
         }
-        int idx = line.indexOf("//");
-        return idx >= 0 ? line.substring(0, idx) : line;
+        return line;
     }
 
     /** ディレクトリ配下の相対パス → SHA-256。内容とファイル構成の両方を捕まえる。 */
