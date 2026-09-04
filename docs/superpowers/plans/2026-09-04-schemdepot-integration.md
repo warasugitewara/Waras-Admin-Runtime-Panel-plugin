@@ -340,7 +340,7 @@ public final class SchemDepotLocator {
 - [ ] **Step 6: テストが通ることを確認**
 
 Run: `cd plugin && ./gradlew test --tests 'dev.warasugi.warp.schemdepot.SchemDepotLocatorTest'`
-Expected: PASS（6 テスト）
+Expected: PASS（5 テスト）
 
 - [ ] **Step 7: コミット**
 
