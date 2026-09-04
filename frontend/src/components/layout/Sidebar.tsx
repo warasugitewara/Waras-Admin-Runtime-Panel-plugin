@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useSchemDepotStatus } from '../../hooks/useSchemDepot'
 
 const links = [
   { to: '/', label: 'Dashboard' },
@@ -13,6 +14,11 @@ const links = [
 ]
 
 export default function Sidebar() {
+  const schemDepot = useSchemDepotStatus()
+  const items = schemDepot.available
+    ? [...links, { to: '/schemdepot', label: 'SchemDepot' }]
+    : links
+
   return (
     <aside
       className="w-48 h-screen flex flex-col py-6 px-3 shrink-0 bg-warp-sidebar border-r border-white/5"
@@ -21,7 +27,7 @@ export default function Sidebar() {
         <span className="text-xl font-bold text-warp-accent">WARP</span>
       </div>
       <nav className="flex flex-col gap-1">
-        {links.map(link => (
+        {items.map(link => (
           <NavLink
             key={link.to}
             to={link.to}
