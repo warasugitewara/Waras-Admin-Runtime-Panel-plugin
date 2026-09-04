@@ -11,6 +11,7 @@ import dev.warasugi.warp.db.*;
 import dev.warasugi.warp.listener.ChatListener;
 import dev.warasugi.warp.listener.PlayerHistoryListener;
 import dev.warasugi.warp.metrics.MetricsCollector;
+import dev.warasugi.warp.schemdepot.SchemDepotReader;
 import dev.warasugi.warp.web.RouteRegistrar;
 import dev.warasugi.warp.web.WebServer;
 import dev.warasugi.warp.web.handlers.*;
@@ -136,13 +137,19 @@ public class WarpPlugin extends JavaPlugin {
         AuditHandler auditHandler = new AuditHandler(db.auditRepo());
         PluginHandler pluginHandler = new PluginHandler(this, db.auditRepo());
 
+        // SchemDepot はオプション扱い。plugins/ 配下を読むだけで、依存も参照も持たない。
+        // 未導入なら status が available=false を返し、フロント側で項目ごと隠れる。
+        SchemDepotReader schemDepotReader =
+                new SchemDepotReader(getDataFolder().toPath().getParent(), getLogger());
+        SchemDepotHandler schemDepotHandler = new SchemDepotHandler(schemDepotReader);
+
         AuthMiddleware authMw = new AuthMiddleware(auth.jwtManager());
         CsrfMiddleware csrfMw = new CsrfMiddleware();
 
         List<RouteRegistrar> handlers = List.of(
                 auth.authHandler(), statusHandler, playerHandler, banHandler,
                 chatHandler, consoleHandler, logHandler, historyHandler, auditHandler,
-                pluginHandler, wsHandler);
+                pluginHandler, schemDepotHandler, wsHandler);
 
         webServer = new WebServer(this, getFile(), config, authMw, csrfMw, handlers);
         webServer.start(config.getHost(), config.getPort());
