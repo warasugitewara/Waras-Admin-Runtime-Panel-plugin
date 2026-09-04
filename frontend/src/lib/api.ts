@@ -96,6 +96,17 @@ const api = {
     request<void>(`/api/plugins/${encodeURIComponent(name)}/disable`, 'POST'),
   selfUpdate: () =>
     request<unknown>('/api/plugins/self-update'),
+  schemDepotStatus: () =>
+    request<unknown>('/api/schemdepot/status'),
+  schemDepotAssets: (page = 0, q?: string, sort?: string, order?: string) =>
+    request<unknown>(
+      `/api/schemdepot/assets?page=${page}` +
+        `${q ? `&q=${encodeURIComponent(q)}` : ''}` +
+        `${sort ? `&sort=${encodeURIComponent(sort)}` : ''}` +
+        `${order ? `&order=${encodeURIComponent(order)}` : ''}`
+    ),
+  schemDepotStats: () =>
+    request<unknown>('/api/schemdepot/stats'),
 }
 
 export default api
