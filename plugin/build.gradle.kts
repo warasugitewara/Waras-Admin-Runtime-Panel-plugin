@@ -94,7 +94,11 @@ val npmBuild by tasks.registering(Exec::class) {
     outputs.dir("../frontend/dist")
 }
 
-val copyFrontend by tasks.registering(Copy::class) {
+// Copy ではなく Sync。vite は内容ハッシュ付きのファイル名を吐くので、
+// 単に上書きコピーすると古いバンドルが web/ に残り続けて JAR に同梱されてしまう。
+// 実際 6 月以降の index-*.js が 10 個溜まって JAR が 10MB ほど太っていた。
+// Sync は宛先を dist と一致させる（余分なファイルを消す）ので、これが正しい。
+val copyFrontend by tasks.registering(Sync::class) {
     dependsOn(npmBuild)
     from("../frontend/dist")
     into("src/main/resources/web")
