@@ -1,35 +1,20 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-
-interface PluginInfo {
-  name: string
-  version: string
-  enabled: boolean
-  description: string | null
-  authors: string[]
-  self: boolean
-}
-
-interface SelfUpdateInfo {
-  currentVersion: string
-  latestVersion: string | null
-  updateAvailable: boolean
-  releaseUrl: string | null
-}
+import type { PluginDto, SelfUpdateInfo } from '../lib/api'
 
 export default function Plugins() {
-  const [plugins, setPlugins] = useState<PluginInfo[]>([])
+  const [plugins, setPlugins] = useState<PluginDto[]>([])
   const [update, setUpdate] = useState<SelfUpdateInfo | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
-  const reload = () => api.plugins().then(d => setPlugins(d as PluginInfo[]))
+  const reload = () => api.plugins().then(setPlugins)
 
   useEffect(() => {
     reload()
-    api.selfUpdate().then(d => setUpdate(d as SelfUpdateInfo))
+    api.selfUpdate().then(setUpdate)
   }, [])
 
-  async function toggle(p: PluginInfo) {
+  async function toggle(p: PluginDto) {
     if (p.self) return
     setBusy(p.name)
     try {

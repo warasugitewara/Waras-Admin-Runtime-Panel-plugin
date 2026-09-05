@@ -1,17 +1,6 @@
 import { useState } from 'react'
 import api from '../lib/api'
-
-interface HistoryEntry {
-  id: number
-  ts: number
-  playerUuid: string
-  playerName: string
-  eventType: string
-  world: string
-  x: number
-  y: number
-  z: number
-}
+import type { HistoryEntry } from '../lib/api'
 
 export default function History() {
   const [player, setPlayer] = useState('')
@@ -20,7 +9,7 @@ export default function History() {
   async function search(e: React.FormEvent) {
     e.preventDefault()
     const data = await api.history(player, 0)
-    setResults(data as HistoryEntry[])
+    setResults(data)
   }
 
   return (
@@ -59,7 +48,7 @@ export default function History() {
                 <td className="px-4 py-3 text-white">{r.playerName}</td>
                 <td className="px-4 py-3 text-warp-accent">{r.eventType}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
-                  {r.world} ({r.x?.toFixed(0)}, {r.y?.toFixed(0)}, {r.z?.toFixed(0)})
+                  {r.world ?? '-'} ({r.x?.toFixed(0)}, {r.y?.toFixed(0)}, {r.z?.toFixed(0)})
                 </td>
               </tr>
             ))}

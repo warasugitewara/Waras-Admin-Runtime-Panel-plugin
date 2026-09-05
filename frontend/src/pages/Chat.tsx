@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../lib/api'
+import type { ChatEntry } from '../lib/api'
 import { wsClient } from '../lib/ws'
 
-interface ChatMsg {
-  id: number
-  ts: number
-  playerName: string
-  message: string
-}
+// この画面が表示に使うのは名前と本文と時刻だけ。WS 経由で届く chat イベントには
+// playerUuid が入っていないので、それを含む ChatEntry をそのまま状態の型にすると
+// 空文字を埋める羽目になる。画面が実際に必要とする分だけを型にしておく。
+type ChatLine = Omit<ChatEntry, 'playerUuid'>
 
 export default function Chat() {
-  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [messages, setMessages] = useState<ChatLine[]>([])
   const [msg, setMsg] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    api.chat().then(d => setMessages((d as ChatMsg[]).reverse()))
+    api.chat().then(d => setMessages(d.reverse()))
     return wsClient.onMessage((type, data) => {
       if (type !== 'chat') return
+      // WS は OpenAPI 仕様の対象外なのでここだけは手書きの形で受ける
       const d = data as { player: string; msg: string; time: number }
       setMessages(prev => [
         ...prev,

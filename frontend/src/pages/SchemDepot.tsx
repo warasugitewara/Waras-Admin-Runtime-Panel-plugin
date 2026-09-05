@@ -1,50 +1,8 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
+import type { SchemDepotAssets, SchemDepotStats } from '../lib/api'
 import { formatBytes } from '../lib/format'
 import { useSchemDepotStatus } from '../hooks/useSchemDepot'
-
-interface Asset {
-  id: string
-  name: string
-  authorUuid: string
-  authorName: string
-  createdAt: number
-  updatedAt: number
-  sizeX: number
-  sizeY: number
-  sizeZ: number
-  volume: number
-  bytes: number
-  fileMissing: boolean
-}
-
-interface AuthorStat {
-  uuid: string
-  name: string
-  count: number
-  bytes: number
-  share: number
-}
-
-interface Stats {
-  totalCount: number
-  totalBytes: number
-  authorCount: number
-  authors: AuthorStat[]
-  integrity: {
-    missingFiles: { id: string; name: string; file: string }[]
-    orphanFiles: { file: string; bytes: number }[]
-    orphanBytes: number
-    schematicsUnreadable: boolean
-  }
-}
-
-interface AssetsPage {
-  total: number
-  page: number
-  pageSize: number
-  items: Asset[]
-}
 
 const SORTS = [
   { key: 'created', label: '登録日' },
@@ -55,21 +13,21 @@ const SORTS = [
 
 export default function SchemDepot() {
   const status = useSchemDepotStatus()
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [stats, setStats] = useState<SchemDepotStats | null>(null)
   const [page, setPage] = useState(0)
-  const [assets, setAssets] = useState<AssetsPage | null>(null)
+  const [assets, setAssets] = useState<SchemDepotAssets | null>(null)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<string>('created')
   const [order, setOrder] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
     if (!status.available) return
-    api.schemDepotStats().then(d => setStats(d as Stats))
+    api.schemDepotStats().then(setStats)
   }, [status.available])
 
   useEffect(() => {
     if (!status.available) return
-    api.schemDepotAssets(page, query, sort, order).then(d => setAssets(d as AssetsPage))
+    api.schemDepotAssets(page, query, sort, order).then(setAssets)
   }, [status.available, page, query, sort, order])
 
   if (status.loading) {

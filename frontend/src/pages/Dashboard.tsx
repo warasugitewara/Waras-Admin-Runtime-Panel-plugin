@@ -2,33 +2,27 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TpsChart from '../components/charts/TpsChart'
 import api from '../lib/api'
+import type { SchemDepotStats, Status } from '../lib/api'
 import { formatBytes } from '../lib/format'
 import { useSchemDepotStatus } from '../hooks/useSchemDepot'
 import { wsClient } from '../lib/ws'
 
-interface Metrics {
-  tps: [number, number, number]
-  mspt: number
-  players: number
-  uptime: number
-  memoryUsedMb: number
-}
-
 export default function Dashboard() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const [metrics, setMetrics] = useState<Status | null>(null)
   const [tpsHistory, setTpsHistory] = useState<number[]>([])
   const schemDepot = useSchemDepotStatus()
-  const [schemStats, setSchemStats] = useState<{ totalCount: number; totalBytes: number } | null>(null)
+  const [schemStats, setSchemStats] = useState<SchemDepotStats | null>(null)
 
   useEffect(() => {
     if (!schemDepot.available) return
-    api.schemDepotStats().then(d => setSchemStats(d as { totalCount: number; totalBytes: number }))
+    api.schemDepotStats().then(setSchemStats)
   }, [schemDepot.available])
 
   useEffect(() => {
     return wsClient.onMessage((type, data) => {
       if (type !== 'metrics') return
-      const m = data as Metrics
+      // WSはOpenAPI仕様の対象外だが、バックエンドはWSでも同じMetricsCollector.Statusを送信しているためStatusにキャストする
+      const m = data as Status
       setMetrics(m)
       setTpsHistory(prev => [...prev.slice(-59), m.tps[0]])
     })

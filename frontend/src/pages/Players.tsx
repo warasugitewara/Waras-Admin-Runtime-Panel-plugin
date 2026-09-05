@@ -1,21 +1,12 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-
-interface Player {
-  name: string
-  uuid: string
-  ping: number
-  world: string
-  x: number
-  y: number
-  z: number
-}
+import type { PlayerDto } from '../lib/api'
 
 export default function Players() {
-  const [players, setPlayers] = useState<Player[]>([])
+  const [players, setPlayers] = useState<PlayerDto[]>([])
 
   useEffect(() => {
-    const load = () => api.players().then(d => setPlayers(d as Player[]))
+    const load = () => api.players().then(setPlayers)
     load()
     const id = setInterval(load, 5000)
     return () => clearInterval(id)

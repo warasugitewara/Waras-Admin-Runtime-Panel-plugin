@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-
-interface Ban {
-  player: string
-  reason: string | null
-  expires: number | null
-}
+import type { BanDto } from '../lib/api'
 
 const DURATION_OPTIONS: { label: string; seconds: number | undefined }[] = [
   { label: '永久', seconds: undefined },
@@ -17,12 +12,12 @@ const DURATION_OPTIONS: { label: string; seconds: number | undefined }[] = [
 ]
 
 export default function Bans() {
-  const [bans, setBans] = useState<Ban[]>([])
+  const [bans, setBans] = useState<BanDto[]>([])
   const [newPlayer, setNewPlayer] = useState('')
   const [newReason, setNewReason] = useState('')
   const [newDuration, setNewDuration] = useState(DURATION_OPTIONS[0].label)
 
-  const reload = () => api.bans().then(d => setBans(d as Ban[]))
+  const reload = () => api.bans().then(setBans)
 
   useEffect(() => { reload() }, [])
 

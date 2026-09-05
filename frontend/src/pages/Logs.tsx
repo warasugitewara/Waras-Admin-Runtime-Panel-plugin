@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-
-interface Log {
-  id: number
-  ts: number
-  level: string
-  logger: string
-  message: string
-}
+import type { LogEntry } from '../lib/api'
 
 const LEVELS = ['', 'INFO', 'WARN', 'ERROR']
 const levelColor: Record<string, string> = {
@@ -17,13 +10,13 @@ const levelColor: Record<string, string> = {
 }
 
 export default function Logs() {
-  const [logs, setLogs] = useState<Log[]>([])
+  const [logs, setLogs] = useState<LogEntry[]>([])
   const [level, setLevel] = useState('')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(0)
 
   useEffect(() => {
-    api.logs(page, level || undefined, q || undefined).then(d => setLogs(d as Log[]))
+    api.logs(page, level || undefined, q || undefined).then(setLogs)
   }, [page, level, q])
 
   return (

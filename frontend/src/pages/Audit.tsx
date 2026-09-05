@@ -1,20 +1,13 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-
-interface AuditEntry {
-  id: number
-  ts: number
-  sourceIp: string
-  action: string
-  detail: string
-}
+import type { AuditEntry } from '../lib/api'
 
 export default function Audit() {
   const [entries, setEntries] = useState<AuditEntry[]>([])
   const [page, setPage] = useState(0)
 
   useEffect(() => {
-    api.audit(page).then(d => setEntries(d as AuditEntry[]))
+    api.audit(page).then(setEntries)
   }, [page])
 
   return (
@@ -38,7 +31,7 @@ export default function Audit() {
                 </td>
                 <td className="px-4 py-3 text-gray-300 font-mono text-xs">{e.sourceIp}</td>
                 <td className="px-4 py-3 text-warp-accent">{e.action}</td>
-                <td className="px-4 py-3 text-gray-500 font-mono text-xs truncate max-w-md">{e.detail}</td>
+                <td className="px-4 py-3 text-gray-500 font-mono text-xs truncate max-w-md">{e.detail ?? '-'}</td>
               </tr>
             ))}
             {entries.length === 0 && (

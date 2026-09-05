@@ -1,27 +1,25 @@
 import { createContext, createElement, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import api from '../lib/api'
+import type { SchemDepotStatus } from '../lib/api'
 
-interface SchemDepotStatus {
-  available: boolean
-  reason: string | null
-  loading: boolean
-}
+// loading はAPIレスポンスには無いフロントエンド専用のUI状態のため、
+// 生成型 (available/reason) に追加する形で保持する
+type SchemDepotState = SchemDepotStatus & { loading: boolean }
 
-const initial: SchemDepotStatus = { available: false, reason: null, loading: true }
+const initial: SchemDepotState = { available: false, reason: null, loading: true }
 
-const SchemDepotContext = createContext<SchemDepotStatus>(initial)
+const SchemDepotContext = createContext<SchemDepotState>(initial)
 
 export function SchemDepotProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<SchemDepotStatus>(initial)
+  const [status, setStatus] = useState<SchemDepotState>(initial)
 
   useEffect(() => {
     let cancelled = false
     api
       .schemDepotStatus()
-      .then(d => {
+      .then(s => {
         if (cancelled) return
-        const s = d as { available: boolean; reason: string | null }
         setStatus({ available: s.available, reason: s.reason, loading: false })
       })
       .catch(() => {
@@ -35,6 +33,6 @@ export function SchemDepotProvider({ children }: { children: ReactNode }) {
   return createElement(SchemDepotContext.Provider, { value: status }, children)
 }
 
-export function useSchemDepotStatus(): SchemDepotStatus {
+export function useSchemDepotStatus(): SchemDepotState {
   return useContext(SchemDepotContext)
 }

@@ -1,5 +1,27 @@
-// Auto-generated types will be imported when openapi-typescript runs
-// For now, use 'unknown' as placeholder
+// api-types.ts はバックエンドの @OpenApi 注釈から Gradle が生成する。手書き禁止。
+// ここで名前を付け直しているのは、画面側が components['schemas'][...] という
+// 書き方を知らなくて済むようにするため。型の実体は生成物のままなので、
+// バックエンドの record を変えれば画面のコンパイルエラーとして跳ね返ってくる。
+import type { components } from './api-types'
+
+type Schemas = components['schemas']
+
+export type Status = Schemas['Status']
+export type PlayerDto = Schemas['PlayerDto']
+export type BanDto = Schemas['BanDto']
+export type IpBanDto = Schemas['IpBanDto']
+export type LogEntry = Schemas['LogEntry']
+export type ChatEntry = Schemas['ChatEntry']
+export type HistoryEntry = Schemas['HistoryEntry']
+export type AuditEntry = Schemas['AuditEntry']
+export type PluginDto = Schemas['PluginDto']
+export type SelfUpdateInfo = Schemas['SelfUpdateInfo']
+export type LoginResult = Schemas['LoginResult']
+export type SchemDepotStatus = Schemas['StatusDto']
+export type SchemDepotAssets = Schemas['AssetsDto']
+export type SchemDepotStats = Schemas['StatsDto']
+export type SchemDepotAsset = Schemas['SchemDepotAsset']
+export type SchemDepotAuthorStat = Schemas['AuthorStat']
 
 export class ApiError extends Error {
   status: number
@@ -55,58 +77,58 @@ async function request<T>(
 
 const api = {
   login: (code: string) =>
-    request<void>('/api/auth/login', 'POST', { code }),
+    request<LoginResult>('/api/auth/login', 'POST', { code }),
   logout: () =>
     request<void>('/api/auth/logout', 'POST'),
   status: () =>
-    request<unknown>('/api/status'),
+    request<Status>('/api/status'),
   players: () =>
-    request<unknown[]>('/api/players'),
+    request<PlayerDto[]>('/api/players'),
   bans: () =>
-    request<unknown[]>('/api/bans'),
+    request<BanDto[]>('/api/bans'),
   addBan: (player: string, reason: string, duration?: number) =>
     request<void>('/api/bans', 'POST', { player, reason, duration }),
   removeBan: (player: string) =>
     request<void>(`/api/bans/${encodeURIComponent(player)}`, 'DELETE'),
   ipbans: () =>
-    request<unknown[]>('/api/ipbans'),
+    request<IpBanDto[]>('/api/ipbans'),
   addIpBan: (ip: string, reason: string) =>
     request<void>('/api/ipbans', 'POST', { ip, reason }),
   removeIpBan: (ip: string) =>
     request<void>(`/api/ipbans/${encodeURIComponent(ip)}`, 'DELETE'),
   logs: (page = 0, level?: string, q?: string) =>
-    request<unknown[]>(
+    request<LogEntry[]>(
       `/api/logs?page=${page}${level ? `&level=${encodeURIComponent(level)}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`
     ),
   chat: (page = 0) =>
-    request<unknown[]>(`/api/chat?page=${page}`),
+    request<ChatEntry[]>(`/api/chat?page=${page}`),
   sendChat: (message: string) =>
     request<void>('/api/chat', 'POST', { message }),
   sendCommand: (command: string) =>
     request<void>('/api/console', 'POST', { command }),
   history: (player: string, page = 0) =>
-    request<unknown[]>(`/api/history?player=${encodeURIComponent(player)}&page=${page}`),
+    request<HistoryEntry[]>(`/api/history?player=${encodeURIComponent(player)}&page=${page}`),
   audit: (page = 0) =>
-    request<unknown[]>(`/api/audit?page=${page}`),
+    request<AuditEntry[]>(`/api/audit?page=${page}`),
   plugins: () =>
-    request<unknown[]>('/api/plugins'),
+    request<PluginDto[]>('/api/plugins'),
   enablePlugin: (name: string) =>
     request<void>(`/api/plugins/${encodeURIComponent(name)}/enable`, 'POST'),
   disablePlugin: (name: string) =>
     request<void>(`/api/plugins/${encodeURIComponent(name)}/disable`, 'POST'),
   selfUpdate: () =>
-    request<unknown>('/api/plugins/self-update'),
+    request<SelfUpdateInfo>('/api/plugins/self-update'),
   schemDepotStatus: () =>
-    request<unknown>('/api/schemdepot/status'),
+    request<SchemDepotStatus>('/api/schemdepot/status'),
   schemDepotAssets: (page = 0, q?: string, sort?: string, order?: string) =>
-    request<unknown>(
+    request<SchemDepotAssets>(
       `/api/schemdepot/assets?page=${page}` +
         `${q ? `&q=${encodeURIComponent(q)}` : ''}` +
         `${sort ? `&sort=${encodeURIComponent(sort)}` : ''}` +
         `${order ? `&order=${encodeURIComponent(order)}` : ''}`
     ),
   schemDepotStats: () =>
-    request<unknown>('/api/schemdepot/stats'),
+    request<SchemDepotStats>('/api/schemdepot/stats'),
 }
 
 export default api
