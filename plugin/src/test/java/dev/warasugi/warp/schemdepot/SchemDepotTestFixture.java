@@ -36,6 +36,9 @@ public final class SchemDepotTestFixture {
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + database);
              Statement st = conn.createStatement()) {
+            // 実 SchemDepot は WAL で運用する (SchemDepot 側 Database.kt)。
+            // 既定の delete モードで検証すると本番と違う条件をテストすることになる。
+            st.execute("PRAGMA journal_mode = WAL");
             st.execute("""
                     CREATE TABLE assets (
                         id              TEXT PRIMARY KEY,

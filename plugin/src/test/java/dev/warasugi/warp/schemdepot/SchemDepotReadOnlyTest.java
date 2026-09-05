@@ -44,6 +44,9 @@ class SchemDepotReadOnlyTest {
 
         Path root = plugins.resolve("SchemDepot");
         Map<String, String> before = fingerprint(root);
+        assertTrue(before.containsKey("assets.db"), "DB 本体が検査対象から漏れている");
+        assertTrue(before.keySet().stream().anyMatch(k -> k.endsWith(".schem")),
+                ".schem が検査対象から漏れている");
 
         var reader = new SchemDepotReader(plugins, LOG);
         for (int i = 0; i < 3; i++) {
@@ -93,16 +96,31 @@ class SchemDepotReadOnlyTest {
         return line;
     }
 
-    /** ディレクトリ配下の相対パス → SHA-256。内容とファイル構成の両方を捕まえる。 */
+    /**
+     * ディレクトリ配下の相対パス → SHA-256。内容とファイル構成の両方を捕まえる。
+     *
+     * SQLite のサイドカー (-wal / -shm / -journal) だけは対象外。WAL の DB は
+     * 読み手が接続を開いた時点で -wal(0 バイト) と -shm が作られる。これは
+     * SQLite の標準動作で、SchemDepot 自身が読むときにも同じことが起きる。
+     * 守るべきは DB 本体と .schem の中身なので、そちらは 1 バイトも見逃さない。
+     */
     private static Map<String, String> fingerprint(Path root) throws Exception {
         Map<String, String> result = new TreeMap<>();
         try (Stream<Path> files = Files.walk(root)) {
-            for (Path file : files.filter(Files::isRegularFile).toList()) {
+            List<Path> targets = files.filter(Files::isRegularFile)
+                    .filter(SchemDepotReadOnlyTest::isNotSqliteSidecar)
+                    .toList();
+            for (Path file : targets) {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 result.put(root.relativize(file).toString().replace('\\', '/'),
                         HexFormat.of().formatHex(digest.digest(Files.readAllBytes(file))));
             }
         }
         return result;
+    }
+
+    private static boolean isNotSqliteSidecar(Path file) {
+        String name = file.getFileName().toString();
+        return !name.endsWith("-wal") && !name.endsWith("-shm") && !name.endsWith("-journal");
     }
 }
