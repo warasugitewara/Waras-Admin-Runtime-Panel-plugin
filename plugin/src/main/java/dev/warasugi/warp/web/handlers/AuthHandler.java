@@ -11,7 +11,12 @@ import io.javalin.http.Context;
 import io.javalin.http.Cookie;
 import io.javalin.http.HttpResponseException;
 import io.javalin.http.SameSite;
-import java.util.Map;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiResponse;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -44,6 +49,12 @@ public class AuthHandler implements RouteRegistrar {
         app.post("/api/auth/logout", this::logout);
     }
 
+    @OpenApi(
+            path = "/api/auth/login",
+            methods = HttpMethod.POST,
+            summary = "TOTPコードでログインする",
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = LoginRequest.class)),
+            responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = LoginResult.class)))
     public void login(Context ctx) {
         TotpManager currentTotp = this.totp;
         if (currentTotp == null) {
@@ -53,8 +64,7 @@ public class AuthHandler implements RouteRegistrar {
         if (!limiter.isAllowed(ip)) {
             throw new HttpResponseException(429, "Too many attempts");
         }
-        record Body(String code) {}
-        var body = ctx.bodyAsClass(Body.class);
+        var body = ctx.bodyAsClass(LoginRequest.class);
         if (body.code() == null || !TOTP_CODE_PATTERN.matcher(body.code()).matches()) {
             throw new HttpResponseException(400, "code must be a 6-digit number");
         }
@@ -70,9 +80,14 @@ public class AuthHandler implements RouteRegistrar {
         String csrf = UUID.randomUUID().toString();
         setJwtCookie(ctx, token);
         setCsrfCookie(ctx, csrf);
-        ctx.json(Map.of("ok", true));
+        ctx.json(new LoginResult(true));
     }
 
+    @OpenApi(
+            path = "/api/auth/logout",
+            methods = HttpMethod.POST,
+            summary = "ログアウトする",
+            responses = @OpenApiResponse(status = "204"))
     public void logout(Context ctx) {
         jwt.revokeAll();
         Cookie jwtCookie = new Cookie("jwt", "");
@@ -105,4 +120,8 @@ public class AuthHandler implements RouteRegistrar {
         c.setMaxAge(config.get().getSessionHours() * 3600);
         ctx.cookie(c);
     }
+
+    public record LoginRequest(@OpenApiRequired String code) {}
+
+    public record LoginResult(boolean ok) {}
 }

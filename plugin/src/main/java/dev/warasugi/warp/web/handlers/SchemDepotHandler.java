@@ -9,6 +9,13 @@ import dev.warasugi.warp.web.PagingParams;
 import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiNullable;
+import io.javalin.openapi.OpenApiParam;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiResponse;
 
 import java.util.Comparator;
 import java.util.List;
@@ -30,12 +37,14 @@ public class SchemDepotHandler implements RouteRegistrar {
         this.reader = reader;
     }
 
-    public record StatusDto(boolean available, String reason) {}
+    public record StatusDto(boolean available, @OpenApiRequired @OpenApiNullable String reason) {}
 
-    public record AssetsDto(int total, int page, int pageSize, List<SchemDepotAsset> items) {}
+    public record AssetsDto(int total, int page, int pageSize,
+                            @OpenApiRequired List<SchemDepotAsset> items) {}
 
     public record StatsDto(int totalCount, long totalBytes, int authorCount,
-                           List<AuthorStat> authors, Integrity integrity) {}
+                           @OpenApiRequired List<AuthorStat> authors,
+                           @OpenApiRequired Integrity integrity) {}
 
     @Override
     public void register(Javalin app) {
@@ -44,12 +53,32 @@ public class SchemDepotHandler implements RouteRegistrar {
         app.get("/api/schemdepot/stats", this::getStats);
     }
 
+    @OpenApi(
+            path = "/api/schemdepot/status",
+            methods = HttpMethod.GET,
+            summary = "SchemDepot の利用可否を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = StatusDto.class)))
     public void getStatus(Context ctx) {
         SchemDepotReader.Result result = reader.read();
         ctx.json(new StatusDto(result.available(),
                 result.available() ? null : result.reason().code()));
     }
 
+    @OpenApi(
+            path = "/api/schemdepot/assets",
+            methods = HttpMethod.GET,
+            summary = "SchemDepot のアセット一覧を取得する",
+            queryParams = {
+                    @OpenApiParam(name = "page", type = Integer.class),
+                    @OpenApiParam(name = "q", type = String.class),
+                    @OpenApiParam(name = "sort", type = String.class),
+                    @OpenApiParam(name = "order", type = String.class)
+            },
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = AssetsDto.class)))
     public void getAssets(Context ctx) {
         SchemDepotReader.Result result = reader.read();
         int page = PagingParams.page(ctx);
@@ -66,6 +95,13 @@ public class SchemDepotHandler implements RouteRegistrar {
         ctx.json(new AssetsDto(filtered.size(), page, PAGE_SIZE, filtered.subList(from, to)));
     }
 
+    @OpenApi(
+            path = "/api/schemdepot/stats",
+            methods = HttpMethod.GET,
+            summary = "SchemDepot の統計情報を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = StatsDto.class)))
     public void getStats(Context ctx) {
         SchemDepotReader.Result result = reader.read();
         if (!result.available()) {

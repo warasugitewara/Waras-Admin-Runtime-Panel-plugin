@@ -6,6 +6,14 @@ import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiNullable;
+import io.javalin.openapi.OpenApiParam;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiResponse;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -33,8 +41,10 @@ public class BanHandler implements RouteRegistrar {
         this.audit = audit;
     }
 
-    public record BanDto(String player, String reason, Long expires) {}
-    public record IpBanDto(String ip, String reason, Long expires) {}
+    public record BanDto(@OpenApiRequired String player, @OpenApiRequired @OpenApiNullable String reason, @OpenApiRequired @OpenApiNullable Long expires) {}
+    public record IpBanDto(@OpenApiRequired String ip, @OpenApiRequired @OpenApiNullable String reason, @OpenApiRequired @OpenApiNullable Long expires) {}
+    public record BanRequest(@OpenApiRequired String player, @OpenApiRequired String reason, Long duration) {}
+    public record IpBanRequest(@OpenApiRequired String ip, @OpenApiRequired String reason) {}
 
     @Override
     public void register(Javalin app) {
@@ -46,6 +56,13 @@ public class BanHandler implements RouteRegistrar {
         app.delete("/api/ipbans/{ip}", this::removeIpBan);
     }
 
+    @OpenApi(
+            path = "/api/bans",
+            methods = HttpMethod.GET,
+            summary = "BAN一覧を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = BanDto[].class)))
     public void getBans(Context ctx) throws ExecutionException, InterruptedException {
         List<BanDto> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
             List<BanDto> result = new ArrayList<>();
@@ -58,9 +75,14 @@ public class BanHandler implements RouteRegistrar {
         ctx.json(list);
     }
 
+    @OpenApi(
+            path = "/api/bans",
+            methods = HttpMethod.POST,
+            summary = "プレイヤーをBANする",
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = BanRequest.class)),
+            responses = @OpenApiResponse(status = "201"))
     public void addBan(Context ctx) throws Exception {
-        record Body(String player, String reason, Long duration) {}
-        var body = ctx.bodyAsClass(Body.class);
+        var body = ctx.bodyAsClass(BanRequest.class);
         if (body.player() == null || !PLAYER_NAME_PATTERN.matcher(body.player()).matches()) {
             throw new HttpResponseException(400, "player must be a valid Minecraft username (3-16 chars)");
         }
@@ -79,6 +101,12 @@ public class BanHandler implements RouteRegistrar {
         ctx.status(201);
     }
 
+    @OpenApi(
+            path = "/api/bans/{player}",
+            methods = HttpMethod.DELETE,
+            summary = "プレイヤーのBANを解除する",
+            pathParams = @OpenApiParam(name = "player", type = String.class, required = true),
+            responses = @OpenApiResponse(status = "204"))
     public void removeBan(Context ctx) throws Exception {
         String player = ctx.pathParam("player");
         Bukkit.getScheduler().callSyncMethod(plugin, () -> {
@@ -89,6 +117,13 @@ public class BanHandler implements RouteRegistrar {
         ctx.status(204);
     }
 
+    @OpenApi(
+            path = "/api/ipbans",
+            methods = HttpMethod.GET,
+            summary = "IPBAN一覧を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = IpBanDto[].class)))
     public void getIpBans(Context ctx) throws ExecutionException, InterruptedException {
         List<IpBanDto> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
             List<IpBanDto> result = new ArrayList<>();
@@ -101,9 +136,14 @@ public class BanHandler implements RouteRegistrar {
         ctx.json(list);
     }
 
+    @OpenApi(
+            path = "/api/ipbans",
+            methods = HttpMethod.POST,
+            summary = "IPアドレスをBANする",
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = IpBanRequest.class)),
+            responses = @OpenApiResponse(status = "201"))
     public void addIpBan(Context ctx) throws Exception {
-        record Body(String ip, String reason) {}
-        var body = ctx.bodyAsClass(Body.class);
+        var body = ctx.bodyAsClass(IpBanRequest.class);
         if (body.ip() == null || !IPV4_PATTERN.matcher(body.ip()).matches()) {
             throw new HttpResponseException(400, "ip must be a valid IPv4 address");
         }
@@ -116,6 +156,12 @@ public class BanHandler implements RouteRegistrar {
         ctx.status(201);
     }
 
+    @OpenApi(
+            path = "/api/ipbans/{ip}",
+            methods = HttpMethod.DELETE,
+            summary = "IPアドレスのBANを解除する",
+            pathParams = @OpenApiParam(name = "ip", type = String.class, required = true),
+            responses = @OpenApiResponse(status = "204"))
     public void removeIpBan(Context ctx) throws Exception {
         String ip = ctx.pathParam("ip");
         Bukkit.getScheduler().callSyncMethod(plugin, () -> {

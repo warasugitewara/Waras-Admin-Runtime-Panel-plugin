@@ -7,6 +7,13 @@ import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiNullable;
+import io.javalin.openapi.OpenApiParam;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -39,11 +46,12 @@ public class PluginHandler implements RouteRegistrar {
     private volatile long cachedAt = 0L;
 
     public record PluginDto(
-            String name, String version, boolean enabled,
-            String description, List<String> authors, boolean self) {}
+            @OpenApiRequired String name, @OpenApiRequired String version, boolean enabled,
+            @OpenApiRequired @OpenApiNullable String description, @OpenApiRequired List<String> authors, boolean self) {}
 
     public record SelfUpdateInfo(
-            String currentVersion, String latestVersion, boolean updateAvailable, String releaseUrl) {}
+            @OpenApiRequired String currentVersion, @OpenApiRequired @OpenApiNullable String latestVersion,
+            boolean updateAvailable, @OpenApiRequired @OpenApiNullable String releaseUrl) {}
 
     public PluginHandler(Plugin plugin, AuditRepository audit) {
         this.plugin = plugin;
@@ -53,11 +61,18 @@ public class PluginHandler implements RouteRegistrar {
     @Override
     public void register(Javalin app) {
         app.get("/api/plugins", this::getPlugins);
-        app.post("/api/plugins/{name}/enable", ctx -> setEnabled(ctx, true));
-        app.post("/api/plugins/{name}/disable", ctx -> setEnabled(ctx, false));
+        app.post("/api/plugins/{name}/enable", this::enablePlugin);
+        app.post("/api/plugins/{name}/disable", this::disablePlugin);
         app.get("/api/plugins/self-update", this::getSelfUpdate);
     }
 
+    @OpenApi(
+            path = "/api/plugins",
+            methods = HttpMethod.GET,
+            summary = "プラグイン一覧を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = PluginDto[].class)))
     public void getPlugins(Context ctx) throws ExecutionException, InterruptedException {
         List<PluginDto> list = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
             List<PluginDto> result = new ArrayList<>();
@@ -71,6 +86,26 @@ public class PluginHandler implements RouteRegistrar {
             return result;
         }).get();
         ctx.json(list);
+    }
+
+    @OpenApi(
+            path = "/api/plugins/{name}/enable",
+            methods = HttpMethod.POST,
+            summary = "プラグインを有効化する",
+            pathParams = @OpenApiParam(name = "name", type = String.class, required = true),
+            responses = @OpenApiResponse(status = "204"))
+    public void enablePlugin(Context ctx) throws Exception {
+        setEnabled(ctx, true);
+    }
+
+    @OpenApi(
+            path = "/api/plugins/{name}/disable",
+            methods = HttpMethod.POST,
+            summary = "プラグインを無効化する",
+            pathParams = @OpenApiParam(name = "name", type = String.class, required = true),
+            responses = @OpenApiResponse(status = "204"))
+    public void disablePlugin(Context ctx) throws Exception {
+        setEnabled(ctx, false);
     }
 
     public void setEnabled(Context ctx, boolean enabled) throws Exception {
@@ -96,6 +131,13 @@ public class PluginHandler implements RouteRegistrar {
         ctx.status(204);
     }
 
+    @OpenApi(
+            path = "/api/plugins/self-update",
+            methods = HttpMethod.GET,
+            summary = "WARP自身の更新情報を取得する",
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = SelfUpdateInfo.class)))
     public void getSelfUpdate(Context ctx) {
         ctx.json(checkSelfUpdate());
     }

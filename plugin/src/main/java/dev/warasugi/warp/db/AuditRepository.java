@@ -2,6 +2,8 @@ package dev.warasugi.warp.db;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.openapi.OpenApiNullable;
+import io.javalin.openapi.OpenApiRequired;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +16,8 @@ public class AuditRepository {
     private final Connection conn;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public record AuditEntry(long id, long ts, String sourceIp, String action, String detail) {}
+    public record AuditEntry(long id, long ts, @OpenApiRequired String sourceIp, @OpenApiRequired String action,
+                             @OpenApiRequired @OpenApiNullable String detail) {}
 
     public AuditRepository(Connection conn) {
         this.conn = conn;

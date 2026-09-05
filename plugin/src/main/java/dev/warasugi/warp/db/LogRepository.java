@@ -1,5 +1,6 @@
 package dev.warasugi.warp.db;
 
+import io.javalin.openapi.OpenApiRequired;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +11,8 @@ import java.util.List;
 public class LogRepository {
     private final Connection conn;
 
-    public record LogEntry(long id, long ts, String level, String logger, String message) {}
+    public record LogEntry(long id, long ts, @OpenApiRequired String level, @OpenApiRequired String logger,
+                           @OpenApiRequired String message) {}
 
     public LogRepository(Connection conn) {
         this.conn = conn;

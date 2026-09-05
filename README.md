@@ -156,6 +156,16 @@ cd plugin
 .\gradlew.bat shadowJar
 # → plugin/build/libs/warp-<version>-all.jar
 ```
+
+### API 型定義について
+
+API 仕様の正はバックエンドです。各ハンドラの `@OpenApi` 注釈から `compileJava` が OpenAPI の
+JSON を吐き、`generateApiTypes` タスクがそこから `frontend/src/lib/api-types.ts` を生成します
+（`gradlew` 経由でビルドすれば自動で走ります）。この生成物は `.gitignore` 済みで、**手書き禁止**です。
+
+レスポンスの形を変えたいときは Java 側の record を直してください。フロントが追随できていなければ
+`npm run build` の型チェックで落ちます。
+
 ## スクリーンショット
 <img width="1867" height="437" alt="2026-06-14_13h44_23" src="https://github.com/user-attachments/assets/29b08c8e-9759-4084-b097-b8a84e5a71fa" />
 <img width="1872" height="968" alt="2026-06-14_13h43_48" src="https://github.com/user-attachments/assets/8d38b3ab-6282-4c62-8a69-ad4961a4746d" />

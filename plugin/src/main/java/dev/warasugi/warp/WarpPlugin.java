@@ -124,7 +124,7 @@ public class WarpPlugin extends JavaPlugin {
 
     private void initWeb(PanelConfig config, DatabaseContext db, AuthContext auth) throws Exception {
         AdminWsHandler wsHandler = new AdminWsHandler(auth.jwtManager());
-        metricsCollector.addListener(snap -> wsHandler.broadcast("metrics", metricsCollector.toMap(snap)));
+        metricsCollector.addListener(snap -> wsHandler.broadcast("metrics", metricsCollector.toStatus(snap)));
         webSocketAppender = WebSocketAppender.register(wsHandler, db.logRepo());
 
         StatusHandler statusHandler = new StatusHandler(metricsCollector);

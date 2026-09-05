@@ -7,6 +7,12 @@ import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import java.util.Map;
@@ -27,9 +33,14 @@ public class ConsoleHandler implements RouteRegistrar {
         app.post("/api/console", this::execute);
     }
 
+    @OpenApi(
+            path = "/api/console",
+            methods = HttpMethod.POST,
+            summary = "コンソールコマンドを実行する",
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = ConsoleRequest.class)),
+            responses = @OpenApiResponse(status = "204"))
     public void execute(Context ctx) throws Exception {
-        record Body(String command) {}
-        var body = ctx.bodyAsClass(Body.class);
+        var body = ctx.bodyAsClass(ConsoleRequest.class);
         if (body.command() == null || body.command().isBlank()) {
             throw new HttpResponseException(400, "command must not be empty");
         }
@@ -54,4 +65,6 @@ public class ConsoleHandler implements RouteRegistrar {
         audit.record(ClientIpResolver.resolve(ctx), "console", Map.of("cmd", cmd));
         ctx.status(204);
     }
+
+    public record ConsoleRequest(@OpenApiRequired String command) {}
 }

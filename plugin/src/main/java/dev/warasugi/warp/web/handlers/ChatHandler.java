@@ -8,6 +8,13 @@ import dev.warasugi.warp.web.RouteRegistrar;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiParam;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiRequired;
+import io.javalin.openapi.OpenApiResponse;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -30,14 +37,27 @@ public class ChatHandler implements RouteRegistrar {
         app.post("/api/chat", this::sendChat);
     }
 
+    @OpenApi(
+            path = "/api/chat",
+            methods = HttpMethod.GET,
+            summary = "チャット履歴を取得する",
+            queryParams = @OpenApiParam(name = "page", type = Integer.class),
+            responses = @OpenApiResponse(
+                    status = "200",
+                    content = @OpenApiContent(from = ChatRepository.ChatEntry[].class)))
     public void getChat(Context ctx) throws Exception {
         int page = PagingParams.page(ctx);
         ctx.json(chat.query(null, 100, page * 100));
     }
 
+    @OpenApi(
+            path = "/api/chat",
+            methods = HttpMethod.POST,
+            summary = "チャットメッセージを送信する",
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = ChatRequest.class)),
+            responses = @OpenApiResponse(status = "204"))
     public void sendChat(Context ctx) throws Exception {
-        record Body(String message) {}
-        var body = ctx.bodyAsClass(Body.class);
+        var body = ctx.bodyAsClass(ChatRequest.class);
         if (body.message() == null || body.message().isBlank()) {
             throw new HttpResponseException(400, "message must not be empty");
         }
@@ -49,4 +69,6 @@ public class ChatHandler implements RouteRegistrar {
         audit.record(ClientIpResolver.resolve(ctx), "chat", Map.of("msg", body.message()));
         ctx.status(204);
     }
+
+    public record ChatRequest(@OpenApiRequired String message) {}
 }

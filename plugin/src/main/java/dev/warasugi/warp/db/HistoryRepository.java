@@ -1,5 +1,7 @@
 package dev.warasugi.warp.db;
 
+import io.javalin.openapi.OpenApiNullable;
+import io.javalin.openapi.OpenApiRequired;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,8 +12,9 @@ import java.util.List;
 public class HistoryRepository {
     private final Connection conn;
 
-    public record HistoryEntry(long id, long ts, String playerUuid, String playerName,
-                               String eventType, String world, double x, double y, double z) {}
+    public record HistoryEntry(long id, long ts, @OpenApiRequired String playerUuid, @OpenApiRequired String playerName,
+                               @OpenApiRequired String eventType, @OpenApiRequired @OpenApiNullable String world,
+                               double x, double y, double z) {}
 
     public HistoryRepository(Connection conn) {
         this.conn = conn;

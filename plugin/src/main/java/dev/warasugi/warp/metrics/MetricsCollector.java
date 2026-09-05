@@ -1,16 +1,19 @@
 package dev.warasugi.warp.metrics;
 
+import io.javalin.openapi.OpenApiRequired;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class MetricsCollector {
     public record Snapshot(double tps1, double tps5, double tps15, double mspt,
                            int players, long memoryUsedMb) {}
+
+    /** /api/status と WS の metrics イベントで返す形。両方が同じ record を通るので形がずれない。 */
+    public record Status(@OpenApiRequired double[] tps, double mspt, int players, long uptime, long memoryUsedMb) {}
 
     private volatile Snapshot latest;
     private BukkitTask task;
@@ -43,17 +46,17 @@ public class MetricsCollector {
         return latest != null ? latest : buildSnapshot();
     }
 
-    public Map<String, Object> getLatestSnapshotAsMap() {
-        return toMap(getLatestSnapshot());
+    public Status getLatestStatus() {
+        return toStatus(getLatestSnapshot());
     }
 
-    public Map<String, Object> toMap(Snapshot s) {
-        return Map.of(
-                "tps", new double[]{s.tps1(), s.tps5(), s.tps15()},
-                "mspt", s.mspt(),
-                "players", s.players(),
-                "uptime", System.currentTimeMillis() - startMs,
-                "memoryUsedMb", s.memoryUsedMb()
+    public Status toStatus(Snapshot s) {
+        return new Status(
+                new double[]{s.tps1(), s.tps5(), s.tps15()},
+                s.mspt(),
+                s.players(),
+                System.currentTimeMillis() - startMs,
+                s.memoryUsedMb()
         );
     }
 

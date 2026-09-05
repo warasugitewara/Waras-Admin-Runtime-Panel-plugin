@@ -1,5 +1,6 @@
 package dev.warasugi.warp.db;
 
+import io.javalin.openapi.OpenApiRequired;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +11,8 @@ import java.util.List;
 public class ChatRepository {
     private final Connection conn;
 
-    public record ChatEntry(long id, long ts, String playerUuid, String playerName, String message) {}
+    public record ChatEntry(long id, long ts, @OpenApiRequired String playerUuid, @OpenApiRequired String playerName,
+                            @OpenApiRequired String message) {}
 
     public ChatRepository(Connection conn) {
         this.conn = conn;
