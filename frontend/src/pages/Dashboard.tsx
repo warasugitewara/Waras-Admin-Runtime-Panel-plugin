@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import TpsChart from '../components/charts/TpsChart'
+import api from '../lib/api'
+import { formatBytes } from '../lib/format'
+import { useSchemDepotStatus } from '../hooks/useSchemDepot'
 import { wsClient } from '../lib/ws'
 
 interface Metrics {
@@ -13,6 +17,13 @@ interface Metrics {
 export default function Dashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [tpsHistory, setTpsHistory] = useState<number[]>([])
+  const schemDepot = useSchemDepotStatus()
+  const [schemStats, setSchemStats] = useState<{ totalCount: number; totalBytes: number } | null>(null)
+
+  useEffect(() => {
+    if (!schemDepot.available) return
+    api.schemDepotStats().then(d => setSchemStats(d as { totalCount: number; totalBytes: number }))
+  }, [schemDepot.available])
 
   useEffect(() => {
     return wsClient.onMessage((type, data) => {
@@ -48,6 +59,21 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      {schemDepot.available && schemStats && (
+        <Link
+          to="/schemdepot"
+          className="block rounded-xl p-4 bg-warp-panel hover:bg-warp-panel/80 transition-colors"
+        >
+          <p className="text-xs text-gray-400">SchemDepot</p>
+          <p className="text-2xl font-bold mt-1 text-warp-accent">
+            {schemStats.totalCount}
+            <span className="text-sm font-normal text-gray-400 ml-2">アセット</span>
+            <span className="text-sm font-normal text-gray-400 ml-3">
+              {formatBytes(schemStats.totalBytes)}
+            </span>
+          </p>
+        </Link>
+      )}
       {tpsHistory.length > 0 && (
         <div className="rounded-xl p-4 bg-warp-panel">
           <p className="text-xs text-gray-400 mb-2">TPS History</p>

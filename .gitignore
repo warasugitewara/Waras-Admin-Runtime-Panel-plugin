@@ -12,6 +12,14 @@ frontend/src/lib/api-types.ts
 .idea/
 *.iml
 .vscode/
+plugin/bin/
+plugin/.project
+plugin/.classpath
+plugin/.settings/
+
+# AI tooling (ログ・キャッシュ)
+.claude/
+.serena/
 
 # OS
 .DS_Store

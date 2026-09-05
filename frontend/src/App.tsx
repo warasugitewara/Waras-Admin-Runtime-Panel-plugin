@@ -9,6 +9,8 @@ import Logs from './pages/Logs'
 import History from './pages/History'
 import Audit from './pages/Audit'
 import Plugins from './pages/Plugins'
+import SchemDepot from './pages/SchemDepot'
+import { SchemDepotProvider } from './hooks/useSchemDepot'
 import NotFound from './pages/NotFound'
 import RequireAuth from './components/RequireAuth'
 import WsProvider from './components/WsProvider'
@@ -24,7 +26,9 @@ export default function App() {
           element={
             <RequireAuth>
               <WsProvider>
-                <Layout />
+                <SchemDepotProvider>
+                  <Layout />
+                </SchemDepotProvider>
               </WsProvider>
             </RequireAuth>
           }
@@ -38,6 +42,7 @@ export default function App() {
           <Route path="history" element={<History />} />
           <Route path="audit" element={<Audit />} />
           <Route path="plugins" element={<Plugins />} />
+          <Route path="schemdepot" element={<SchemDepot />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
