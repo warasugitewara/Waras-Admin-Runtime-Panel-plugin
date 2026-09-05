@@ -16,6 +16,7 @@ Paper 1.21.x 対応の Minecraft サーバー向け Web 管理パネルプラグ
 - **プレイヤー履歴** — join/quit/death などのイベント履歴を検索
 - **監査ログ** — BAN操作・コマンド実行・チャット送信の履歴を閲覧
 - **プラグイン管理** — 導入済みプラグインの一覧・有効/無効切替・バージョン確認、WARP自身の更新有無をGitHub Releasesでチェック
+- **SchemDepot 連携（任意）** — [SchemDepot](https://github.com/Poteto-Groove/SchemDepot) が導入されている場合のみメニューに出現。登録済みスキマティックの一覧・容量・作者別内訳を閲覧できる。**完全に読み取り専用**で、アセットを書き換えることはない
 - **共有 TOTP 認証** — アカウント不要。1〜4人が同一QRを認証アプリに登録して利用
 
 ## アーキテクチャ
@@ -32,6 +33,7 @@ Javalin 6 (127.0.0.1:8080)  ← Paper Plugin 組み込み
   │
 SQLite (logs / chat / history / audit)
 Paper BanList (BAN の SoT)
+SchemDepot SQLite (読み取り専用・任意)
 ```
 
 ## 技術スタック
@@ -171,8 +173,13 @@ JSON を吐き、`generateApiTypes` タスクがそこから `frontend/src/lib/a
 <img width="1872" height="968" alt="2026-06-14_13h43_48" src="https://github.com/user-attachments/assets/8d38b3ab-6282-4c62-8a69-ad4961a4746d" />
 <img width="1874" height="965" alt="2026-06-14_13h55_44" src="https://github.com/user-attachments/assets/2a17a1bd-12ba-4b3f-ac29-52bed5121ed2" />
 
+SchemDepot 連携（導入時のみ表示）
+
+![SchemDepot 画面](docs/images/schemdepot.png)
+
 ## TODO
 
+- Java → Kotlin への移行。本体 42 ファイル / 約 2,600 行、テスト 13 ファイル / 約 950 行。`@OpenApi` 注釈と record を data class に移す必要がある。
 - プラグイン単体の再起動（PlugManの`/plugman reload <plugin>`相当）。Paper標準APIはdisable/enableのみでクラスローダー差し替えを伴う完全リロードは提供しないため、実装方式（クラスローダー再生成のリスク/制約）を別途検討する。
 
 ## ライセンス
