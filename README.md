@@ -1,6 +1,6 @@
 # WARP — Wara's Admin Runtime Panel
 
-Paper 1.21.x 対応の Minecraft サーバー向け Web 管理パネルプラグイン。
+Paper 26.2 対応の Minecraft サーバー向け Web 管理パネルプラグイン。
 <img width="1867" height="437" alt="2026-06-14_13h44_23" src="https://github.com/user-attachments/assets/29b08c8e-9759-4084-b097-b8a84e5a71fa" />
 プラグイン内に Javalin による組み込み HTTP/WS サーバーを持ち、Cloudflare Tunnel を経由して安全に外部公開する。フロントエンドは React + TypeScript で構築した SPA で、プラグインの JAR に同梱して配信する。
 
@@ -40,7 +40,7 @@ SchemDepot SQLite (読み取り専用・任意)
 
 | レイヤー | 技術 |
 |---|---|
-| Plugin | Java 21, Paper API 1.21.1, Gradle 8 + Shadow |
+| Plugin | Java 25, Paper API 26.2, Gradle 9 + Shadow 9 |
 | Web Server | Javalin 6 (Virtual Threads) |
 | 認証 | TOTP (RFC 6238), JWT (jjwt 0.12.6), HttpOnly Cookie |
 | DB | SQLite (xerial 3.46) |
@@ -62,7 +62,7 @@ SchemDepot SQLite (読み取り専用・任意)
 
 ### 必要環境
 
-- Paper 1.21.x サーバー（Java 21 以上）
+- Paper 26.2 サーバー（Java 25）
 - Cloudflare アカウント（無料プラン可）
 
 ### インストール
