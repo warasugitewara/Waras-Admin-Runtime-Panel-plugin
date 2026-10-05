@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "8.3.3"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 version = "2.0.0"
@@ -11,8 +11,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.129-stable")
+    // サーバー本体 (Paper 26.2) が同梱している log4j-core と揃える。
+    compileOnly("org.apache.logging.log4j:log4j-core:2.26.0")
     implementation("io.javalin:javalin:6.4.0")
     // OpenAPI はビルド時にだけ使う。仕様 JSON を吐いてフロントの型を生成したら用済みなので
     // ランタイム側のプラグインは入れない（JAR に載せない / /openapi も公開しない）。
@@ -32,7 +33,7 @@ dependencies {
     // テストは本番クラスを参照するので、そこに付いた @OpenApi を解決できないと
     // 「不明な列挙型定数です HttpMethod.GET」という警告が出る。実害は無いが埋もれると困る。
     testCompileOnly("io.javalin.community.openapi:openapi-specification:6.1.3")
-    testImplementation("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.129-stable")
 }
 
 tasks.shadowJar {
@@ -41,11 +42,18 @@ tasks.shadowJar {
     relocate("com.fasterxml.jackson", "dev.warasugi.warp.libs.jackson")
     relocate("org.apache.commons.codec", "dev.warasugi.warp.libs.commonscodec")
     mergeServiceFiles()
+    // Shadow 9 は既定で重複ファイルを EXCLUDE し、しかもそれが mergeServiceFiles より先に効く。
+    // そのままだと Jetty の WebSocket 拡張などの service 定義が最初の 1 つ以外黙って捨てられるので、
+    // service ファイルだけは重複を通して ServiceFileTransformer にマージさせる。
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
 
 tasks.test { useJUnitPlatform() }
 
-java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }
+// Paper 26.x は Java 25 が必須。
+java { toolchain.languageVersion.set(JavaLanguageVersion.of(25)) }
 
 // -A... はアノテーションプロセッサへの引数（生成される仕様の info に入る）。
 // encoding は JDK 18 未満やロケール差でソース中の日本語が壊れないための保険。

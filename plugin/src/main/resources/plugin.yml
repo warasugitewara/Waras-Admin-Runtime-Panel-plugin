@@ -1,7 +1,7 @@
 name: WARP
 version: "${version}"
 main: dev.warasugi.warp.WarpPlugin
-api-version: "1.21"
+api-version: "26.2"
 description: Web管理パネルプラグイン
 authors: [warasugi]
 commands:
